@@ -1,12 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  Outlet,
-  Link,
-  createRootRouteWithContext,
-  useRouter,
-  HeadContent,
-  Scripts,
-} from "@tanstack/react-router";
+import { Outlet, Link, createRootRouteWithContext, useRouter } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
 
@@ -75,7 +68,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "gate ae — prep log" },
       { name: "description", content: "personal prep tracker for gate aerospace engineering" },
       { property: "og:title", content: "gate ae — prep log" },
-      { property: "og:description", content: "personal prep tracker for gate aerospace engineering" },
+      {
+        property: "og:description",
+        content: "personal prep tracker for gate aerospace engineering",
+      },
       { property: "og:type", content: "website" },
     ],
     links: [
@@ -95,17 +91,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
+  return <>{children}</>;
 }
 
 function RootComponent() {
