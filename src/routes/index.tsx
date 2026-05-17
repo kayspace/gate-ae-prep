@@ -9,17 +9,18 @@ export const Route = createFileRoute("/")({
 
 const STORAGE_KEY = "gate-ae-progress-v1";
 const NOTES_KEY = "gate-ae-notes-v1";
+const RESOURCES_KEY = "gate-ae-resources-v1";
+const FORMULAS_KEY = "gate-ae-formulas-v1";
 
 type Progress = Record<string, boolean>;
 type Notes = Record<string, string>;
+type Resource = { id: string; title: string; url: string; kind: "video" | "playlist" | "link" };
+type Resources = Record<string, Resource[]>;
+type Formulas = Record<string, string>;
 
-function loadProgress(): Progress {
-  if (typeof window === "undefined") return {};
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { return {}; }
-}
-function loadNotes(): Notes {
-  if (typeof window === "undefined") return {};
-  try { return JSON.parse(localStorage.getItem(NOTES_KEY) || "{}"); } catch { return {}; }
+function loadJSON<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try { return JSON.parse(localStorage.getItem(key) || "null") ?? fallback; } catch { return fallback; }
 }
 
 function topicKey(s: Section, t: string, p: string) {
@@ -34,26 +35,34 @@ function sectionStats(s: Section, progress: Progress) {
   return { done, total: all.length, pct: all.length ? done / all.length : 0 };
 }
 
+function detectKind(url: string): Resource["kind"] {
+  if (/youtube\.com\/playlist|list=/.test(url)) return "playlist";
+  if (/youtube\.com|youtu\.be/.test(url)) return "video";
+  return "link";
+}
+
+type ViewKey = "syllabus" | "books" | "resources" | "formulas" | "log";
+
 function Home() {
   const [progress, setProgress] = useState<Progress>({});
   const [notes, setNotes] = useState<Notes>({});
-  const [active, setActive] = useState<string>("math");
-  const [view, setView] = useState<"syllabus" | "books" | "log">("syllabus");
+  const [resources, setResources] = useState<Resources>({});
+  const [formulas, setFormulas] = useState<Formulas>({});
+  const [active, setActive] = useState<string>("aptitude");
+  const [view, setView] = useState<ViewKey>("syllabus");
   const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setProgress(loadProgress());
-    setNotes(loadNotes());
+    setProgress(loadJSON(STORAGE_KEY, {}));
+    setNotes(loadJSON(NOTES_KEY, {}));
+    setResources(loadJSON(RESOURCES_KEY, {}));
+    setFormulas(loadJSON(FORMULAS_KEY, {}));
   }, []);
 
-  useEffect(() => {
-    if (Object.keys(progress).length || progress) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-    }
-  }, [progress]);
-  useEffect(() => {
-    localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-  }, [notes]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }, [progress]);
+  useEffect(() => { localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); }, [notes]);
+  useEffect(() => { localStorage.setItem(RESOURCES_KEY, JSON.stringify(resources)); }, [resources]);
+  useEffect(() => { localStorage.setItem(FORMULAS_KEY, JSON.stringify(formulas)); }, [formulas]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -75,13 +84,11 @@ function Home() {
   }, [progress]);
 
   const section = syllabus.find((s) => s.id === active)!;
-
   const toggle = (key: string) =>
     setProgress((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
     <div ref={mainRef} className="min-h-screen">
-      {/* top bar */}
       <header className="px-6 md:px-10 pt-8 pb-6 flex items-baseline justify-between">
         <div className="flex items-baseline gap-3">
           <span className="serif text-2xl">gate ae</span>
@@ -92,16 +99,14 @@ function Home() {
         </div>
       </header>
 
-      {/* progress bar */}
       <div className="px-6 md:px-10">
         <div className="bar">
           <i style={{ transform: `scaleX(${overall.pct})` }} />
         </div>
       </div>
 
-      {/* view switch */}
-      <nav className="px-6 md:px-10 pt-6 pb-8 flex gap-2">
-        {(["syllabus", "books", "log"] as const).map((v) => (
+      <nav className="px-6 md:px-10 pt-6 pb-8 flex gap-2 flex-wrap">
+        {(["syllabus", "books", "resources", "formulas", "log"] as const).map((v) => (
           <button
             key={v}
             onClick={() => setView(v)}
@@ -114,7 +119,6 @@ function Home() {
 
       {view === "syllabus" && (
         <div className="grid grid-cols-12 gap-0 border-t border-[var(--line)]">
-          {/* sections list */}
           <aside className="col-span-12 md:col-span-3 border-r border-[var(--line)] py-6">
             {syllabus.map((s) => {
               const st = sectionStats(s, progress);
@@ -141,7 +145,6 @@ function Home() {
             })}
           </aside>
 
-          {/* section detail */}
           <main className="col-span-12 md:col-span-9 py-10 px-6 md:px-12">
             <div className="fade-in">
               <div className="section-num">section 0{section.num}</div>
@@ -155,7 +158,7 @@ function Home() {
 
             <div className="mt-12 grid md:grid-cols-2 gap-12">
               <div className="fade-in">
-                <div className="tag mb-4">core · 90% of qs</div>
+                <div className="tag mb-4">core{section.id === "aptitude" ? " · 15% of marks" : " · 90% of qs"}</div>
                 {section.core.map((t) => (
                   <div key={t.name} className="mb-8">
                     <div className="serif text-xl mb-3 lowercase">{t.name}</div>
@@ -165,15 +168,8 @@ function Home() {
                         const done = !!progress[k];
                         return (
                           <li key={p} className="flex items-start gap-3 text-sm">
-                            <input
-                              type="checkbox"
-                              className="check mt-1"
-                              checked={done}
-                              onChange={() => toggle(k)}
-                            />
-                            <span className={done ? "text-[var(--faint)] line-through" : ""}>
-                              {p}
-                            </span>
+                            <input type="checkbox" className="check mt-1" checked={done} onChange={() => toggle(k)} />
+                            <span className={done ? "text-[var(--faint)] line-through" : ""}>{p}</span>
                           </li>
                         );
                       })}
@@ -196,15 +192,8 @@ function Home() {
                           const done = !!progress[k];
                           return (
                             <li key={p} className="flex items-start gap-3 text-sm">
-                              <input
-                                type="checkbox"
-                                className="check mt-1"
-                                checked={done}
-                                onChange={() => toggle(k)}
-                              />
-                              <span className={done ? "text-[var(--faint)] line-through" : ""}>
-                                {p}
-                              </span>
+                              <input type="checkbox" className="check mt-1" checked={done} onChange={() => toggle(k)} />
+                              <span className={done ? "text-[var(--faint)] line-through" : ""}>{p}</span>
                             </li>
                           );
                         })}
@@ -217,9 +206,7 @@ function Home() {
                   <div className="tag mb-3">notes</div>
                   <textarea
                     value={notes[section.id] || ""}
-                    onChange={(e) =>
-                      setNotes((n) => ({ ...n, [section.id]: e.target.value }))
-                    }
+                    onChange={(e) => setNotes((n) => ({ ...n, [section.id]: e.target.value }))}
                     placeholder="scratchpad. formulas, doubts, links..."
                     className="w-full min-h-[160px] text-sm leading-relaxed border border-[var(--line)] p-3 focus:border-[var(--fg)] transition-colors"
                   />
@@ -231,11 +218,19 @@ function Home() {
       )}
 
       {view === "books" && <BooksView />}
+      {view === "resources" && <ResourcesView resources={resources} setResources={setResources} />}
+      {view === "formulas" && <FormulasView formulas={formulas} setFormulas={setFormulas} />}
       {view === "log" && <LogView progress={progress} />}
 
-      <footer className="px-6 md:px-10 py-10 mt-20 border-t border-[var(--line)] flex justify-between items-baseline">
+      <footer className="px-6 md:px-10 py-10 mt-20 border-t border-[var(--line)] flex flex-wrap gap-4 justify-between items-baseline">
         <span className="mono text-[10px] text-[var(--faint)] uppercase tracking-widest">
           local-first · saves to your browser
+        </span>
+        <span className="mono text-[10px] text-[var(--faint)] uppercase tracking-widest">
+          ui inspo ·{" "}
+          <a href="https://kayspace.vercel.app/" target="_blank" rel="noreferrer" className="link-u text-[var(--muted)] hover:text-[var(--fg)]">
+            kayspace
+          </a>
         </span>
         <span className="serif italic text-sm text-[var(--muted)]">keep at it.</span>
       </footer>
@@ -260,9 +255,7 @@ function BooksView() {
               <div className="mono text-[10px] text-[var(--faint)]">0{s.num}</div>
               <div className="serif text-xl lowercase">{s.title}</div>
             </div>
-            <code className="mono text-xs text-[var(--muted)]">
-              /books/{s.id}/
-            </code>
+            <code className="mono text-xs text-[var(--muted)]">/books/{s.id}/</code>
           </div>
         ))}
       </div>
@@ -277,6 +270,136 @@ function BooksView() {
           <li>· curtis — orbital mechanics for eng students</li>
           <li>· kreyszig — advanced engineering mathematics</li>
         </ul>
+      </div>
+    </div>
+  );
+}
+
+function ResourcesView({
+  resources, setResources,
+}: { resources: Resources; setResources: React.Dispatch<React.SetStateAction<Resources>> }) {
+  const [active, setActive] = useState<string>("aptitude");
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
+
+  const list = resources[active] || [];
+
+  const add = () => {
+    if (!url.trim()) return;
+    const r: Resource = {
+      id: crypto.randomUUID(),
+      title: title.trim() || url.trim(),
+      url: url.trim(),
+      kind: detectKind(url.trim()),
+    };
+    setResources((prev) => ({ ...prev, [active]: [...(prev[active] || []), r] }));
+    setTitle(""); setUrl("");
+  };
+  const remove = (id: string) =>
+    setResources((prev) => ({ ...prev, [active]: (prev[active] || []).filter((r) => r.id !== id) }));
+
+  return (
+    <div className="px-6 md:px-12 py-10 fade-in">
+      <div className="section-num">resources · videos & links</div>
+      <h1 className="serif text-5xl mt-2 mb-6 lowercase">what you're watching</h1>
+      <p className="text-sm text-[var(--muted)] max-w-xl mb-8 leading-relaxed">
+        paste any yt video, playlist, or link you're using for a subject. saved to your browser.
+      </p>
+
+      <div className="flex gap-2 flex-wrap mb-8">
+        {syllabus.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setActive(s.id)}
+            className={`btn-ghost ${active === s.id ? "active" : ""}`}
+          >
+            {s.title.toLowerCase()}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-12">
+        <div className="fade-in">
+          <div className="tag mb-3">add a link</div>
+          <div className="space-y-3 border border-[var(--line)] p-4">
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="title (optional)"
+              className="w-full text-sm border-b border-[var(--line)] py-2 focus:border-[var(--fg)] transition-colors"
+            />
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://youtube.com/..."
+              className="w-full text-sm mono border-b border-[var(--line)] py-2 focus:border-[var(--fg)] transition-colors"
+            />
+            <button onClick={add} className="btn-ghost active">add</button>
+          </div>
+        </div>
+
+        <div className="fade-in">
+          <div className="tag mb-3">{list.length} saved</div>
+          {list.length === 0 ? (
+            <div className="serif italic text-[var(--muted)]">nothing here yet.</div>
+          ) : (
+            <ul className="space-y-3">
+              {list.map((r) => (
+                <li key={r.id} className="border-b border-[var(--line)] pb-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <a href={r.url} target="_blank" rel="noreferrer" className="serif text-lg lowercase link-u block truncate">
+                      {r.title}
+                    </a>
+                    <div className="mono text-[10px] text-[var(--faint)] mt-1 uppercase tracking-widest">
+                      {r.kind} · <span className="lowercase tracking-normal">{r.url}</span>
+                    </div>
+                  </div>
+                  <button onClick={() => remove(r.id)} className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest shrink-0">
+                    remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FormulasView({
+  formulas, setFormulas,
+}: { formulas: Formulas; setFormulas: React.Dispatch<React.SetStateAction<Formulas>> }) {
+  const [active, setActive] = useState<string>("aptitude");
+  return (
+    <div className="px-6 md:px-12 py-10 fade-in">
+      <div className="section-num">formulas · cheatsheets</div>
+      <h1 className="serif text-5xl mt-2 mb-6 lowercase">formula sheets</h1>
+      <p className="text-sm text-[var(--muted)] max-w-xl mb-8 leading-relaxed">
+        one per section. dump the formulas you need to remember. plain text, saves locally.
+      </p>
+
+      <div className="flex gap-2 flex-wrap mb-6">
+        {syllabus.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setActive(s.id)}
+            className={`btn-ghost ${active === s.id ? "active" : ""}`}
+          >
+            {s.title.toLowerCase()}
+          </button>
+        ))}
+      </div>
+
+      <div className="fade-in">
+        <textarea
+          value={formulas[active] || ""}
+          onChange={(e) => setFormulas((f) => ({ ...f, [active]: e.target.value }))}
+          placeholder={`formulas for ${active}...\n\nlift = 0.5 * rho * v^2 * S * Cl\n...`}
+          className="w-full min-h-[60vh] text-sm mono leading-relaxed border border-[var(--line)] p-4 focus:border-[var(--fg)] transition-colors"
+        />
       </div>
     </div>
   );
