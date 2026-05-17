@@ -4,10 +4,18 @@ personal site to track gate aerospace eng (2026) prep. clean, local-first, no ac
 
 ## what's inside
 
-- **syllabus view** — all 6 sections broken into core / special topics. tick off as you go. saves to your browser.
-- **books view** — folder map for your pdfs.
-- **log view** — bird's-eye progress per section.
-- **notes** — per-section scratchpad (also local).
+- **syllabus** — general aptitude + 6 ae sections, broken into core / special topics. tick off as you go.
+- **books** — folder map for your pdfs.
+- **resources** — paste yt videos / playlists / links you're using per subject.
+- **formulas** — per-section formula cheatsheet.
+- **log** — bird's-eye progress per section.
+- **notes** — per-section scratchpad inside the syllabus view.
+
+everything saves to `localStorage` — no accounts, no backend.
+
+## license
+
+mit. see [LICENSE](./LICENSE). do whatever, just keep the notice.
 
 ## the stack (intentionally light)
 
