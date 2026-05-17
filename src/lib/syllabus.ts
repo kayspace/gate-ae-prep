@@ -9,6 +9,49 @@ export type Section = {
 
 export const syllabus: Section[] = [
   {
+    id: "aptitude",
+    num: 0,
+    title: "General Aptitude",
+    core: [
+      {
+        name: "Verbal Aptitude",
+        points: [
+          "Basic English grammar: tenses, articles, adjectives, prepositions",
+          "Conjunctions, verb-noun agreement, word order",
+          "Vocabulary: meaning, context, antonyms, synonyms",
+          "Reading & comprehension, narrative sequencing",
+        ],
+      },
+      {
+        name: "Quantitative Aptitude",
+        points: [
+          "Data interpretation: tables, graphs (bar, pie, line)",
+          "2/3-D plots, maps",
+          "Numerical computation & estimation",
+          "Ratios, percentages, powers, exponents, logarithms",
+          "Permutations & combinations, series",
+          "Mensuration & geometry, elementary statistics & probability",
+        ],
+      },
+      {
+        name: "Analytical Aptitude",
+        points: [
+          "Logic: deduction and induction",
+          "Analogy, numerical relations & reasoning",
+        ],
+      },
+      {
+        name: "Spatial Aptitude",
+        points: [
+          "Transformation of shapes: translation, rotation, scaling",
+          "Mirroring, assembling, grouping",
+          "Paper folding, cutting, patterns in 2D and 3D",
+        ],
+      },
+    ],
+    special: [],
+  },
+  {
     id: "math",
     num: 1,
     title: "Engineering Mathematics",
