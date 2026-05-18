@@ -30,9 +30,66 @@ type Resource = {
 type Resources = Record<string, Resource[]>;
 type Formulas = Record<string, string>;
 
+const DEFAULT_RESOURCES: Resources = {
+  aptitude: [
+    {
+      id: "default-aptitude-youtube",
+      title: "Aptitude playlist",
+      url: "https://youtube.com/playlist?list=PLC36xJgs4dxE43Au1FGRQvwHTr7NbgDCS",
+      kind: "playlist",
+      source: "recommended",
+    },
+  ],
+  math: [
+    {
+      id: "default-math-youtube",
+      title: "Engineering Mathematics playlist",
+      url: "https://youtube.com/playlist?list=PLvTTv60o7qj_tdY9zH7YceES7jfXiZkAz",
+      kind: "playlist",
+      source: "recommended",
+    },
+    {
+      id: "default-math-vector",
+      title: "Vector algebra playlist",
+      url: "https://youtube.com/playlist?list=PLqjFFrfKcY5yy_1N4MpMZjUHrlqDLVYEh",
+      kind: "playlist",
+      source: "recommended",
+    },
+  ],
+  aero: [
+    {
+      id: "default-aero-fluid",
+      title: "Fluid mechanics playlist",
+      url: "https://youtube.com/playlist?list=PL9RcWoqXmzaLnlGN39w2-1jyFyI_ALVa3",
+      kind: "playlist",
+      source: "recommended",
+    },
+  ],
+  structures: [
+    {
+      id: "default-structures-som",
+      title: "Strength of Materials playlist",
+      url: "https://youtube.com/playlist?list=PL9RcWoqXmzaLlfmNg2Ku1SdZtvXnYrLbc",
+      kind: "playlist",
+      source: "recommended",
+    },
+    {
+      id: "default-structures-som-topics",
+      title: "SOM Topics Visualized playlist",
+      url: "https://youtube.com/playlist?list=PLEYqyyrm-hQ1kTm4Ce5uQzsHG89fXsIa5",
+      kind: "playlist",
+      source: "recommended",
+    },
+  ],
+};
+
 function loadJSON<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
-  try { return JSON.parse(localStorage.getItem(key) || "null") ?? fallback; } catch { return fallback; }
+  try {
+    return JSON.parse(localStorage.getItem(key) || "null") ?? fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 function topicKey(s: Section, t: string, p: string) {
@@ -40,9 +97,7 @@ function topicKey(s: Section, t: string, p: string) {
 }
 
 function sectionStats(s: Section, progress: Progress) {
-  const all = [...s.core, ...s.special].flatMap((t) =>
-    t.points.map((p) => topicKey(s, t.name, p))
-  );
+  const all = [...s.core, ...s.special].flatMap((t) => t.points.map((p) => topicKey(s, t.name, p)));
   const done = all.filter((k) => progress[k]).length;
   return { done, total: all.length, pct: all.length ? done / all.length : 0 };
 }
@@ -111,15 +166,27 @@ function Home() {
     setFormulas(loadJSON(FORMULAS_KEY, {}));
   }, []);
 
-  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }, [progress]);
-  useEffect(() => { localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); }, [notes]);
-  useEffect(() => { localStorage.setItem(RESOURCES_KEY, JSON.stringify(resources)); }, [resources]);
-  useEffect(() => { localStorage.setItem(FORMULAS_KEY, JSON.stringify(formulas)); }, [formulas]);
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+  }, [progress]);
+  useEffect(() => {
+    localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+  }, [notes]);
+  useEffect(() => {
+    localStorage.setItem(RESOURCES_KEY, JSON.stringify(resources));
+  }, [resources]);
+  useEffect(() => {
+    localStorage.setItem(FORMULAS_KEY, JSON.stringify(formulas));
+  }, [formulas]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.to(".fade-in", {
-        opacity: 1, y: 0, duration: 0.6, ease: "power2.out", stagger: 0.04,
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        ease: "power2.out",
+        stagger: 0.04,
       });
     }, mainRef);
     return () => ctx.revert();
@@ -127,17 +194,14 @@ function Home() {
 
   const overall = useMemo(() => {
     const all = syllabus.flatMap((s) =>
-      [...s.core, ...s.special].flatMap((t) =>
-        t.points.map((p) => topicKey(s, t.name, p))
-      )
+      [...s.core, ...s.special].flatMap((t) => t.points.map((p) => topicKey(s, t.name, p))),
     );
     const done = all.filter((k) => progress[k]).length;
     return { done, total: all.length, pct: all.length ? done / all.length : 0 };
   }, [progress]);
 
   const section = syllabus.find((s) => s.id === active)!;
-  const toggle = (key: string) =>
-    setProgress((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggle = (key: string) => setProgress((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
     <div ref={mainRef} className="min-h-screen">
@@ -183,13 +247,17 @@ function Home() {
                 >
                   <div className="flex items-baseline justify-between gap-3">
                     <div className="flex items-baseline gap-3">
-                      <span className={`mono text-[10px] ${isActive ? "text-[var(--bg)]/60" : "text-[var(--faint)]"}`}>
+                      <span
+                        className={`mono text-[10px] ${isActive ? "text-[var(--bg)]/60" : "text-[var(--faint)]"}`}
+                      >
                         0{s.num}
                       </span>
                       <span className="serif text-lg">{s.title.toLowerCase()}</span>
                     </div>
                   </div>
-                  <div className={`mono text-[10px] mt-1 ${isActive ? "text-[var(--bg)]/60" : "text-[var(--faint)]"}`}>
+                  <div
+                    className={`mono text-[10px] mt-1 ${isActive ? "text-[var(--bg)]/60" : "text-[var(--faint)]"}`}
+                  >
                     {st.done}/{st.total} · {Math.round(st.pct * 100)}%
                   </div>
                 </button>
@@ -200,9 +268,7 @@ function Home() {
           <main className="col-span-12 md:col-span-9 py-10 px-6 md:px-12">
             <div className="fade-in">
               <div className="section-num">section 0{section.num}</div>
-              <h1 className="serif text-5xl md:text-6xl mt-2 mb-1 lowercase">
-                {section.title}
-              </h1>
+              <h1 className="serif text-5xl md:text-6xl mt-2 mb-1 lowercase">{section.title}</h1>
               <div className="mono text-xs text-[var(--muted)]">
                 {sectionStats(section, progress).done}/{sectionStats(section, progress).total} done
               </div>
@@ -210,7 +276,9 @@ function Home() {
 
             <div className="mt-12 grid md:grid-cols-2 gap-12">
               <div className="fade-in">
-                <div className="tag mb-4">core{section.id === "aptitude" ? " · 15% of marks" : " · 90% of qs"}</div>
+                <div className="tag mb-4">
+                  core{section.id === "aptitude" ? " · 15% of marks" : " · 90% of qs"}
+                </div>
                 {section.core.map((t) => (
                   <div key={t.name} className="mb-8">
                     <div className="serif text-xl mb-3 lowercase">{t.name}</div>
@@ -220,8 +288,15 @@ function Home() {
                         const done = !!progress[k];
                         return (
                           <li key={p} className="flex items-start gap-3 text-sm">
-                            <input type="checkbox" className="check mt-1" checked={done} onChange={() => toggle(k)} />
-                            <span className={done ? "text-[var(--faint)] line-through" : ""}>{p}</span>
+                            <input
+                              type="checkbox"
+                              className="check mt-1"
+                              checked={done}
+                              onChange={() => toggle(k)}
+                            />
+                            <span className={done ? "text-[var(--faint)] line-through" : ""}>
+                              {p}
+                            </span>
                           </li>
                         );
                       })}
@@ -244,8 +319,15 @@ function Home() {
                           const done = !!progress[k];
                           return (
                             <li key={p} className="flex items-start gap-3 text-sm">
-                              <input type="checkbox" className="check mt-1" checked={done} onChange={() => toggle(k)} />
-                              <span className={done ? "text-[var(--faint)] line-through" : ""}>{p}</span>
+                              <input
+                                type="checkbox"
+                                className="check mt-1"
+                                checked={done}
+                                onChange={() => toggle(k)}
+                              />
+                              <span className={done ? "text-[var(--faint)] line-through" : ""}>
+                                {p}
+                              </span>
                             </li>
                           );
                         })}
@@ -280,7 +362,12 @@ function Home() {
         </span>
         <span className="mono text-[10px] text-[var(--faint)] uppercase tracking-widest">
           ui inspo ·{" "}
-          <a href="https://kayspace.vercel.app/" target="_blank" rel="noreferrer" className="link-u text-[var(--muted)] hover:text-[var(--fg)]">
+          <a
+            href="https://kayspace.vercel.app/"
+            target="_blank"
+            rel="noreferrer"
+            className="link-u text-[var(--muted)] hover:text-[var(--fg)]"
+          >
             kayspace
           </a>
         </span>
@@ -345,8 +432,12 @@ function BooksView() {
 }
 
 function ResourcesView({
-  resources, setResources,
-}: { resources: Resources; setResources: React.Dispatch<React.SetStateAction<Resources>> }) {
+  resources,
+  setResources,
+}: {
+  resources: Resources;
+  setResources: React.Dispatch<React.SetStateAction<Resources>>;
+}) {
   const [active, setActive] = useState<string>("aptitude");
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
@@ -415,7 +506,43 @@ function ResourcesView({
   };
 
   const remove = (id: string) =>
-    setResources((prev) => ({ ...prev, [active]: (prev[active] || []).filter((r) => r.id !== id) }));
+    setResources((prev) => ({
+      ...prev,
+      [active]: (prev[active] || []).filter((r) => r.id !== id),
+    }));
+
+  const beginEdit = (resource: Resource) => {
+    setEditingId(resource.id);
+    setEditTitle(resource.title);
+    setEditUrl(resource.url);
+  };
+
+  const saveEdit = () => {
+    if (!editingId || !editUrl.trim()) return;
+    setResources((prev) => ({
+      ...prev,
+      [active]: (prev[active] || []).map((r) =>
+        r.id === editingId
+          ? {
+              ...r,
+              title: editTitle.trim() || editUrl.trim(),
+              url: editUrl.trim(),
+              kind: detectKind(editUrl.trim()),
+              source: "custom",
+            }
+          : r,
+      ),
+    }));
+    setEditingId(null);
+    setEditTitle("");
+    setEditUrl("");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditTitle("");
+    setEditUrl("");
+  };
 
   const toggleVideo = (rid: string, vid: string) => {
     setResources((prev) => ({
@@ -477,6 +604,10 @@ function ResourcesView({
         <div className="lg:col-span-4 fade-in">
           <div className="tag mb-3">add a link</div>
           <div className="space-y-3 border border-[var(--line)] p-4">
+            <div className="mono text-[10px] uppercase tracking-widest text-[var(--muted)] mb-1">
+              Recommended entries appear automatically; you can still add your own link or edit any
+              item.
+            </div>
             <input
               type="text"
               value={title}
@@ -598,8 +729,12 @@ function ResourcesView({
 }
 
 function FormulasView({
-  formulas, setFormulas,
-}: { formulas: Formulas; setFormulas: React.Dispatch<React.SetStateAction<Formulas>> }) {
+  formulas,
+  setFormulas,
+}: {
+  formulas: Formulas;
+  setFormulas: React.Dispatch<React.SetStateAction<Formulas>>;
+}) {
   const [active, setActive] = useState<string>("aptitude");
   return (
     <div className="px-6 md:px-12 py-10 fade-in">
