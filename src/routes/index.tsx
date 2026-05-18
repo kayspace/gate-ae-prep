@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { syllabus, type Section } from "@/lib/syllabus";
+import { books as booksData } from "@/lib/books";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -9,12 +10,23 @@ export const Route = createFileRoute("/")({
 
 const STORAGE_KEY = "gate-ae-progress-v1";
 const NOTES_KEY = "gate-ae-notes-v1";
-const RESOURCES_KEY = "gate-ae-resources-v1";
+const RESOURCES_KEY = "gate-ae-resources-v2";
 const FORMULAS_KEY = "gate-ae-formulas-v1";
+const YT_KEY = "gate-ae-yt-key-v1";
 
 type Progress = Record<string, boolean>;
 type Notes = Record<string, string>;
-type Resource = { id: string; title: string; url: string; kind: "video" | "playlist" | "link" };
+type PlaylistVideo = { videoId: string; title: string; thumb: string; done: boolean };
+type Resource = {
+  id: string;
+  title: string;
+  url: string;
+  kind: "video" | "playlist" | "link";
+  playlistId?: string;
+  videos?: PlaylistVideo[];
+  loading?: boolean;
+  error?: string;
+};
 type Resources = Record<string, Resource[]>;
 type Formulas = Record<string, string>;
 
@@ -36,9 +48,46 @@ function sectionStats(s: Section, progress: Progress) {
 }
 
 function detectKind(url: string): Resource["kind"] {
-  if (/youtube\.com\/playlist|list=/.test(url)) return "playlist";
+  if (/youtube\.com\/playlist|[?&]list=/.test(url)) return "playlist";
   if (/youtube\.com|youtu\.be/.test(url)) return "video";
   return "link";
+}
+
+function extractPlaylistId(url: string): string | null {
+  const m = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+async function fetchPlaylistVideos(playlistId: string, apiKey: string): Promise<PlaylistVideo[]> {
+  const out: PlaylistVideo[] = [];
+  let pageToken = "";
+  for (let i = 0; i < 20; i++) {
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId=${encodeURIComponent(playlistId)}&key=${encodeURIComponent(apiKey)}${pageToken ? `&pageToken=${pageToken}` : ""}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`yt api ${res.status}: ${txt.slice(0, 200)}`);
+    }
+    const data = await res.json();
+    for (const item of data.items || []) {
+      const vid = item.contentDetails?.videoId;
+      if (!vid) continue;
+      out.push({
+        videoId: vid,
+        title: item.snippet?.title || vid,
+        thumb: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "",
+        done: false,
+      });
+    }
+    if (!data.nextPageToken) break;
+    pageToken = data.nextPageToken;
+  }
+  return out;
+}
+
+function fmtSize(n: number) {
+  if (n > 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} mb`;
+  return `${Math.round(n / 1024)} kb`;
 }
 
 type ViewKey = "syllabus" | "books" | "resources" | "formulas" | "log";
@@ -55,7 +104,10 @@ function Home() {
   useEffect(() => {
     setProgress(loadJSON(STORAGE_KEY, {}));
     setNotes(loadJSON(NOTES_KEY, {}));
-    setResources(loadJSON(RESOURCES_KEY, {}));
+    // migrate v1 -> v2 if needed
+    const v2 = loadJSON<Resources | null>(RESOURCES_KEY, null);
+    if (v2) setResources(v2);
+    else setResources(loadJSON("gate-ae-resources-v1", {}));
     setFormulas(loadJSON(FORMULAS_KEY, {}));
   }, []);
 
@@ -220,7 +272,7 @@ function Home() {
       {view === "books" && <BooksView />}
       {view === "resources" && <ResourcesView resources={resources} setResources={setResources} />}
       {view === "formulas" && <FormulasView formulas={formulas} setFormulas={setFormulas} />}
-      {view === "log" && <LogView progress={progress} />}
+      {view === "log" && <LogView progress={progress} resources={resources} />}
 
       <footer className="px-6 md:px-10 py-10 mt-20 border-t border-[var(--line)] flex flex-wrap gap-4 justify-between items-baseline">
         <span className="mono text-[10px] text-[var(--faint)] uppercase tracking-widest">
@@ -244,32 +296,49 @@ function BooksView() {
       <div className="section-num">books · pdfs</div>
       <h1 className="serif text-5xl mt-2 mb-6 lowercase">your shelf</h1>
       <p className="text-sm text-[var(--muted)] max-w-xl mb-10 leading-relaxed">
-        drop pdfs inside the folders below (in <span className="mono">public/books/</span>),
-        then rebuild. each section has its own shelf. keep filenames simple — author + title.
+        drop pdfs inside <span className="mono">public/books/&lt;section&gt;/</span> and they show up here on next dev/build.
+        click to open in a new tab.
       </p>
 
-      <div className="grid md:grid-cols-2 gap-x-12 gap-y-2">
-        {syllabus.map((s) => (
-          <div key={s.id} className="py-4 border-b border-[var(--line)] flex items-baseline justify-between gap-4">
-            <div>
-              <div className="mono text-[10px] text-[var(--faint)]">0{s.num}</div>
-              <div className="serif text-xl lowercase">{s.title}</div>
+      <div className="space-y-10">
+        {syllabus.map((s) => {
+          const list = booksData[s.id] || [];
+          return (
+            <div key={s.id} className="fade-in">
+              <div className="flex items-baseline justify-between mb-3 border-b border-[var(--line)] pb-2">
+                <div className="flex items-baseline gap-3">
+                  <span className="mono text-[10px] text-[var(--faint)]">0{s.num}</span>
+                  <span className="serif text-2xl lowercase">{s.title}</span>
+                </div>
+                <span className="mono text-[10px] text-[var(--muted)]">{list.length} {list.length === 1 ? "book" : "books"}</span>
+              </div>
+              {list.length === 0 ? (
+                <div className="serif italic text-sm text-[var(--muted)]">
+                  empty. drop a pdf into <span className="mono not-italic">/public/books/{s.id}/</span>
+                </div>
+              ) : (
+                <ul className="grid md:grid-cols-2 gap-x-8">
+                  {list.map((b) => (
+                    <li key={b.file} className="py-3 border-b border-[var(--line)] flex items-start justify-between gap-3">
+                      <a
+                        href={`/books/${s.id}/${encodeURIComponent(b.file)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="serif text-base lowercase link-u min-w-0 truncate"
+                        title={b.name}
+                      >
+                        {b.name.toLowerCase()}
+                      </a>
+                      <span className="mono text-[10px] text-[var(--faint)] shrink-0 uppercase tracking-widest">
+                        {fmtSize(b.size)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-            <code className="mono text-xs text-[var(--muted)]">/books/{s.id}/</code>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-12 p-6 border border-[var(--line)] max-w-2xl">
-        <div className="tag mb-2">suggested reads</div>
-        <ul className="text-sm space-y-2 text-[var(--muted)]">
-          <li>· anderson — fundamentals of aerodynamics</li>
-          <li>· nelson — flight stability and automatic control</li>
-          <li>· megson — aircraft structures for eng students</li>
-          <li>· hill & peterson — mechanics and thermodynamics of propulsion</li>
-          <li>· curtis — orbital mechanics for eng students</li>
-          <li>· kreyszig — advanced engineering mathematics</li>
-        </ul>
+          );
+        })}
       </div>
     </div>
   );
@@ -281,30 +350,116 @@ function ResourcesView({
   const [active, setActive] = useState<string>("aptitude");
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
+  const [apiKey, setApiKey] = useState<string>("");
+  const [showKey, setShowKey] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setApiKey(typeof window === "undefined" ? "" : (localStorage.getItem(YT_KEY) || ""));
+  }, []);
+
+  const saveKey = (v: string) => {
+    setApiKey(v);
+    if (v) localStorage.setItem(YT_KEY, v);
+    else localStorage.removeItem(YT_KEY);
+  };
 
   const list = resources[active] || [];
 
-  const add = () => {
-    if (!url.trim()) return;
+  const updateResource = (id: string, patch: Partial<Resource>) => {
+    setResources((prev) => ({
+      ...prev,
+      [active]: (prev[active] || []).map((r) => (r.id === id ? { ...r, ...patch } : r)),
+    }));
+  };
+
+  const loadPlaylist = async (r: Resource) => {
+    if (!r.playlistId) return;
+    if (!apiKey) {
+      updateResource(r.id, { error: "add a youtube data api key below first." });
+      return;
+    }
+    updateResource(r.id, { loading: true, error: undefined });
+    try {
+      const vids = await fetchPlaylistVideos(r.playlistId, apiKey);
+      // preserve old "done" state by videoId if reloading
+      const prevDone = new Map((r.videos || []).map((v) => [v.videoId, v.done]));
+      const merged = vids.map((v) => ({ ...v, done: prevDone.get(v.videoId) ?? false }));
+      updateResource(r.id, { videos: merged, loading: false });
+    } catch (e: any) {
+      updateResource(r.id, { loading: false, error: e.message || "fetch failed" });
+    }
+  };
+
+  const add = async () => {
+    const u = url.trim();
+    if (!u) return;
+    const kind = detectKind(u);
+    const playlistId = kind === "playlist" ? extractPlaylistId(u) : undefined;
     const r: Resource = {
       id: crypto.randomUUID(),
-      title: title.trim() || url.trim(),
-      url: url.trim(),
-      kind: detectKind(url.trim()),
+      title: title.trim() || u,
+      url: u,
+      kind,
+      playlistId: playlistId || undefined,
     };
     setResources((prev) => ({ ...prev, [active]: [...(prev[active] || []), r] }));
     setTitle(""); setUrl("");
+    if (kind === "playlist" && playlistId && apiKey) {
+      // auto-fetch
+      setTimeout(() => {
+        loadPlaylist(r);
+        setOpenId(r.id);
+      }, 0);
+    }
   };
+
   const remove = (id: string) =>
     setResources((prev) => ({ ...prev, [active]: (prev[active] || []).filter((r) => r.id !== id) }));
 
+  const toggleVideo = (rid: string, vid: string) => {
+    setResources((prev) => ({
+      ...prev,
+      [active]: (prev[active] || []).map((r) =>
+        r.id === rid
+          ? { ...r, videos: (r.videos || []).map((v) => v.videoId === vid ? { ...v, done: !v.done } : v) }
+          : r,
+      ),
+    }));
+  };
+
   return (
     <div className="px-6 md:px-12 py-10 fade-in">
-      <div className="section-num">resources · videos & links</div>
+      <div className="section-num">resources · videos & courses</div>
       <h1 className="serif text-5xl mt-2 mb-6 lowercase">what you're watching</h1>
-      <p className="text-sm text-[var(--muted)] max-w-xl mb-8 leading-relaxed">
-        paste any yt video, playlist, or link you're using for a subject. saved to your browser.
+      <p className="text-sm text-[var(--muted)] max-w-2xl mb-8 leading-relaxed">
+        paste any yt video, playlist, or link. playlists turn into courses — every video gets a tick + progress bar.
+        needs a free youtube data api key (one-time, saved to your browser).
       </p>
+
+      {/* yt api key */}
+      <div className="mb-10 border border-[var(--line)] p-4 max-w-2xl">
+        <div className="flex items-baseline justify-between mb-2">
+          <span className="tag">yt data api key {apiKey ? "· set" : "· not set"}</span>
+          <button onClick={() => setShowKey((s) => !s)} className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest">
+            {showKey ? "hide" : "show"}
+          </button>
+        </div>
+        {showKey && (
+          <>
+            <input
+              type="text"
+              value={apiKey}
+              onChange={(e) => saveKey(e.target.value)}
+              placeholder="AIza..."
+              className="w-full text-sm mono border-b border-[var(--line)] py-2 focus:border-[var(--fg)] transition-colors"
+            />
+            <p className="text-xs text-[var(--muted)] mt-2 leading-relaxed">
+              get one free at <a className="link-u" href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer">console.cloud.google.com</a> → create project → enable <span className="mono">YouTube Data API v3</span> → create api key.
+            </p>
+          </>
+        )}
+      </div>
 
       <div className="flex gap-2 flex-wrap mb-8">
         {syllabus.map((s) => (
@@ -318,8 +473,8 @@ function ResourcesView({
         ))}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-12">
-        <div className="fade-in">
+      <div className="grid lg:grid-cols-12 gap-10">
+        <div className="lg:col-span-4 fade-in">
           <div className="tag mb-3">add a link</div>
           <div className="space-y-3 border border-[var(--line)] p-4">
             <input
@@ -333,34 +488,107 @@ function ResourcesView({
               type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://youtube.com/..."
+              placeholder="https://youtube.com/playlist?list=..."
               className="w-full text-sm mono border-b border-[var(--line)] py-2 focus:border-[var(--fg)] transition-colors"
             />
             <button onClick={add} className="btn-ghost active">add</button>
+            <p className="text-[10px] mono text-[var(--faint)] uppercase tracking-widest">
+              playlists auto-load as courses
+            </p>
           </div>
         </div>
 
-        <div className="fade-in">
+        <div className="lg:col-span-8 fade-in">
           <div className="tag mb-3">{list.length} saved</div>
           {list.length === 0 ? (
             <div className="serif italic text-[var(--muted)]">nothing here yet.</div>
           ) : (
-            <ul className="space-y-3">
-              {list.map((r) => (
-                <li key={r.id} className="border-b border-[var(--line)] pb-3 flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <a href={r.url} target="_blank" rel="noreferrer" className="serif text-lg lowercase link-u block truncate">
-                      {r.title}
-                    </a>
-                    <div className="mono text-[10px] text-[var(--faint)] mt-1 uppercase tracking-widest">
-                      {r.kind} · <span className="lowercase tracking-normal">{r.url}</span>
+            <ul className="space-y-6">
+              {list.map((r) => {
+                const isPlaylist = r.kind === "playlist";
+                const total = r.videos?.length || 0;
+                const done = r.videos?.filter((v) => v.done).length || 0;
+                const pct = total ? done / total : 0;
+                const open = openId === r.id;
+                return (
+                  <li key={r.id} className="border border-[var(--line)] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <a href={r.url} target="_blank" rel="noreferrer" className="serif text-lg lowercase link-u block truncate">
+                          {r.title}
+                        </a>
+                        <div className="mono text-[10px] text-[var(--faint)] mt-1 uppercase tracking-widest">
+                          {r.kind} {isPlaylist && total > 0 && `· ${done}/${total} · ${Math.round(pct * 100)}%`}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        {isPlaylist && (
+                          <button
+                            onClick={() => {
+                              setOpenId(open ? null : r.id);
+                              if (!r.videos && !open) loadPlaylist(r);
+                            }}
+                            className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest"
+                          >
+                            {open ? "close" : (r.videos ? "open" : "load")}
+                          </button>
+                        )}
+                        {isPlaylist && r.videos && (
+                          <button onClick={() => loadPlaylist(r)} className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest">
+                            refresh
+                          </button>
+                        )}
+                        <button onClick={() => remove(r.id)} className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest">
+                          remove
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <button onClick={() => remove(r.id)} className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest shrink-0">
-                    remove
-                  </button>
-                </li>
-              ))}
+
+                    {isPlaylist && total > 0 && (
+                      <div className="mt-3 bar"><i style={{ transform: `scaleX(${pct})` }} /></div>
+                    )}
+
+                    {isPlaylist && r.loading && (
+                      <div className="mt-3 mono text-xs text-[var(--muted)]">loading playlist…</div>
+                    )}
+                    {isPlaylist && r.error && (
+                      <div className="mt-3 mono text-xs text-[color:var(--fg)] bg-[var(--line)]/40 p-2">
+                        {r.error}
+                      </div>
+                    )}
+
+                    {isPlaylist && open && r.videos && r.videos.length > 0 && (
+                      <ul className="mt-4 divide-y divide-[var(--line)]">
+                        {r.videos.map((v, idx) => (
+                          <li key={v.videoId} className="py-2 flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              className="check shrink-0"
+                              checked={v.done}
+                              onChange={() => toggleVideo(r.id, v.videoId)}
+                            />
+                            <span className="mono text-[10px] text-[var(--faint)] w-6 shrink-0">
+                              {String(idx + 1).padStart(2, "0")}
+                            </span>
+                            {v.thumb && (
+                              <img src={v.thumb} alt="" loading="lazy" className="w-16 h-10 object-cover shrink-0" />
+                            )}
+                            <a
+                              href={`https://www.youtube.com/watch?v=${v.videoId}&list=${r.playlistId}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={`text-sm min-w-0 truncate link-u ${v.done ? "text-[var(--faint)] line-through" : ""}`}
+                              title={v.title}
+                            >
+                              {v.title}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -405,7 +633,12 @@ function FormulasView({
   );
 }
 
-function LogView({ progress }: { progress: Progress }) {
+function LogView({ progress, resources }: { progress: Progress; resources: Resources }) {
+  // course progress aggregate
+  const courses = Object.entries(resources).flatMap(([sid, list]) =>
+    (list || []).filter((r) => r.kind === "playlist" && r.videos && r.videos.length > 0).map((r) => ({ sid, r }))
+  );
+
   return (
     <div className="px-6 md:px-12 py-10 fade-in">
       <div className="section-num">log · overview</div>
@@ -432,6 +665,36 @@ function LogView({ progress }: { progress: Progress }) {
           );
         })}
       </div>
+
+      {courses.length > 0 && (
+        <div className="mt-16 max-w-3xl">
+          <div className="tag mb-4">courses in progress</div>
+          <div className="space-y-5">
+            {courses.map(({ sid, r }) => {
+              const total = r.videos!.length;
+              const done = r.videos!.filter((v) => v.done).length;
+              const pct = done / total;
+              const section = syllabus.find((s) => s.id === sid);
+              return (
+                <div key={r.id} className="fade-in">
+                  <div className="flex items-baseline justify-between mb-2">
+                    <div className="min-w-0">
+                      <div className="serif text-base lowercase truncate">{r.title}</div>
+                      <div className="mono text-[10px] text-[var(--faint)] uppercase tracking-widest">
+                        {section?.title.toLowerCase()}
+                      </div>
+                    </div>
+                    <span className="mono text-xs text-[var(--muted)] shrink-0">
+                      {done}/{total} · {Math.round(pct * 100)}%
+                    </span>
+                  </div>
+                  <div className="bar"><i style={{ transform: `scaleX(${pct})` }} /></div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
