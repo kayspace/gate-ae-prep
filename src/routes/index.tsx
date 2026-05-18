@@ -208,7 +208,7 @@ function Home() {
       <header className="px-6 md:px-10 pt-8 pb-6 flex items-baseline justify-between">
         <div className="flex items-baseline gap-3">
           <span className="serif text-2xl">gate ae</span>
-          <span className="tag">prep log · 2026</span>
+          <span className="tag">prep log · {new Date().getFullYear()}</span>
         </div>
         <div className="mono text-xs text-[var(--muted)]">
           {overall.done}/{overall.total} topics
@@ -357,11 +357,12 @@ function Home() {
       {view === "log" && <LogView progress={progress} resources={resources} />}
 
       <footer className="px-6 md:px-10 py-10 mt-20 border-t border-[var(--line)] flex flex-wrap gap-4 justify-between items-baseline">
-        <span className="mono text-[10px] text-[var(--faint)] uppercase tracking-widest">
+        <span className="mono text-[10px] text-[var(--faint)] tracking-widest">
           local-first · saves to your browser
         </span>
-        <span className="mono text-[10px] text-[var(--faint)] uppercase tracking-widest">
-          ui inspo ·{" "}
+        <span className="serif italic text-sm text-[var(--muted)]">keep at it.</span>
+        <span className="mono text-[10px] text-[var(--faint)] tracking-widest">
+          by{" "}
           <a
             href="https://kayspace.vercel.app/"
             target="_blank"
@@ -371,7 +372,6 @@ function Home() {
             kayspace
           </a>
         </span>
-        <span className="serif italic text-sm text-[var(--muted)]">keep at it.</span>
       </footer>
     </div>
   );
