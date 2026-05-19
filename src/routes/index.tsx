@@ -621,11 +621,20 @@ function ResourcesView({
     }
   };
 
-  const remove = (id: string) =>
+  const remove = (id: string) => {
+    const r = (resources[active] || []).find((x) => x.id === id);
+    const doneCount = r?.videos?.filter((v) => v.done).length || 0;
+    if (r?.kind === "playlist" && doneCount > 0) {
+      const ok = typeof window !== "undefined" && window.confirm(
+        `removing "${r.title}" — your progress (${doneCount}/${r.videos?.length} videos) will be lost. you'll have to start from scratch if you re-add it. continue?`,
+      );
+      if (!ok) return;
+    }
     setResources((prev) => ({
       ...prev,
-      [active]: (prev[active] || []).filter((r) => r.id !== id),
+      [active]: (prev[active] || []).filter((x) => x.id !== id),
     }));
+  };
 
   const beginEdit = (resource: Resource) => {
     setEditingId(resource.id);
