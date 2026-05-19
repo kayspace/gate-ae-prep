@@ -26,6 +26,7 @@ type Resource = {
   videos?: PlaylistVideo[];
   loading?: boolean;
   error?: string;
+  source?: "default" | "custom" | "recommended";
 };
 type Resources = Record<string, Resource[]>;
 type Formulas = Record<string, string>;
@@ -431,6 +432,117 @@ function BooksView() {
   );
 }
 
+// ---- YouTube IFrame Player API loader (singleton) ----
+let ytApiPromise: Promise<any> | null = null;
+function loadYouTubeAPI(): Promise<any> {
+  if (typeof window === "undefined") return Promise.reject(new Error("no window"));
+  const w = window as any;
+  if (w.YT && w.YT.Player) return Promise.resolve(w.YT);
+  if (ytApiPromise) return ytApiPromise;
+  ytApiPromise = new Promise((resolve) => {
+    const prev = w.onYouTubeIframeAPIReady;
+    w.onYouTubeIframeAPIReady = () => {
+      prev && prev();
+      resolve(w.YT);
+    };
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+  });
+  return ytApiPromise;
+}
+
+// Anti-skip: only count time deltas that look like real playback (≤2.5s — covers up to 2x speed).
+// Mark done when watched ≥ 90% of duration.
+function EmbeddedPlayer({
+  videoId,
+  alreadyDone,
+  onComplete,
+}: {
+  videoId: string;
+  alreadyDone: boolean;
+  onComplete: () => void;
+}) {
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const playerRef = useRef<any>(null);
+  const tickRef = useRef<number | null>(null);
+  const watchedRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const completedRef = useRef(alreadyDone);
+  const [pct, setPct] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    let player: any = null;
+    loadYouTubeAPI().then((YT) => {
+      if (cancelled || !hostRef.current) return;
+      player = new YT.Player(hostRef.current, {
+        videoId,
+        playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
+        events: {
+          onStateChange: (e: any) => {
+            if (e.data === YT.PlayerState.PLAYING) startTick();
+            else stopTick();
+          },
+        },
+      });
+      playerRef.current = player;
+    });
+
+    const startTick = () => {
+      if (tickRef.current != null) return;
+      lastTimeRef.current = playerRef.current?.getCurrentTime?.() || 0;
+      tickRef.current = window.setInterval(() => {
+        const p = playerRef.current;
+        if (!p?.getCurrentTime) return;
+        const t = p.getCurrentTime();
+        const d = p.getDuration?.() || 0;
+        const delta = t - lastTimeRef.current;
+        // Real playback delta is ~1s × playbackRate (≤ 2x → ≤ 2s; allow 2.5s buffer).
+        // Negative or large deltas = seek/jump → ignore but resync.
+        if (delta > 0 && delta <= 2.5) watchedRef.current += delta;
+        lastTimeRef.current = t;
+        if (d > 0) {
+          const ratio = watchedRef.current / d;
+          setPct(Math.min(1, ratio));
+          if (!completedRef.current && ratio >= 0.9) {
+            completedRef.current = true;
+            onComplete();
+          }
+        }
+      }, 1000);
+    };
+    const stopTick = () => {
+      if (tickRef.current != null) {
+        clearInterval(tickRef.current);
+        tickRef.current = null;
+      }
+    };
+
+    return () => {
+      cancelled = true;
+      stopTick();
+      try { playerRef.current?.destroy?.(); } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoId]);
+
+  return (
+    <div className="mt-3">
+      <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
+        <div ref={hostRef} className="absolute inset-0 w-full h-full bg-black" />
+      </div>
+      <div className="mt-2 flex items-center gap-3 mono text-[10px] text-[var(--muted)] uppercase tracking-widest">
+        <span>watched {Math.round(pct * 100)}%</span>
+        <div className="flex-1 h-px bg-[var(--line)] relative overflow-hidden">
+          <div className="absolute inset-y-0 left-0 bg-[var(--fg)]" style={{ width: `${Math.round(pct * 100)}%` }} />
+        </div>
+        <span>{completedRef.current ? "✓ done" : "auto-ticks at 90%"}</span>
+      </div>
+    </div>
+  );
+}
+
 function ResourcesView({
   resources,
   setResources,
@@ -444,6 +556,10 @@ function ResourcesView({
   const [apiKey, setApiKey] = useState<string>("");
   const [showKey, setShowKey] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editUrl, setEditUrl] = useState("");
+  const [watchingVid, setWatchingVid] = useState<string | null>(null);
 
   useEffect(() => {
     setApiKey(typeof window === "undefined" ? "" : (localStorage.getItem(YT_KEY) || ""));
@@ -505,11 +621,20 @@ function ResourcesView({
     }
   };
 
-  const remove = (id: string) =>
+  const remove = (id: string) => {
+    const r = (resources[active] || []).find((x) => x.id === id);
+    const doneCount = r?.videos?.filter((v) => v.done).length || 0;
+    if (r?.kind === "playlist" && doneCount > 0) {
+      const ok = typeof window !== "undefined" && window.confirm(
+        `removing "${r.title}" — your progress (${doneCount}/${r.videos?.length} videos) will be lost. you'll have to start from scratch if you re-add it. continue?`,
+      );
+      if (!ok) return;
+    }
     setResources((prev) => ({
       ...prev,
-      [active]: (prev[active] || []).filter((r) => r.id !== id),
+      [active]: (prev[active] || []).filter((x) => x.id !== id),
     }));
+  };
 
   const beginEdit = (resource: Resource) => {
     setEditingId(resource.id);
@@ -690,31 +815,58 @@ function ResourcesView({
 
                     {isPlaylist && open && r.videos && r.videos.length > 0 && (
                       <ul className="mt-4 divide-y divide-[var(--line)]">
-                        {r.videos.map((v, idx) => (
-                          <li key={v.videoId} className="py-2 flex items-center gap-3">
-                            <input
-                              type="checkbox"
-                              className="check shrink-0"
-                              checked={v.done}
-                              onChange={() => toggleVideo(r.id, v.videoId)}
-                            />
-                            <span className="mono text-[10px] text-[var(--faint)] w-6 shrink-0">
-                              {String(idx + 1).padStart(2, "0")}
-                            </span>
-                            {v.thumb && (
-                              <img src={v.thumb} alt="" loading="lazy" className="w-16 h-10 object-cover shrink-0" />
-                            )}
-                            <a
-                              href={`https://www.youtube.com/watch?v=${v.videoId}&list=${r.playlistId}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className={`text-sm min-w-0 truncate link-u ${v.done ? "text-[var(--faint)] line-through" : ""}`}
-                              title={v.title}
-                            >
-                              {v.title}
-                            </a>
-                          </li>
-                        ))}
+                        {r.videos.map((v, idx) => {
+                          const watchKey = `${r.id}::${v.videoId}`;
+                          const isWatching = watchingVid === watchKey;
+                          return (
+                            <li key={v.videoId} className="py-2">
+                              <div className="flex items-center gap-3">
+                                <input
+                                  type="checkbox"
+                                  className="check shrink-0"
+                                  checked={v.done}
+                                  onChange={() => toggleVideo(r.id, v.videoId)}
+                                />
+                                <span className="mono text-[10px] text-[var(--faint)] w-6 shrink-0">
+                                  {String(idx + 1).padStart(2, "0")}
+                                </span>
+                                {v.thumb && (
+                                  <img src={v.thumb} alt="" loading="lazy" className="w-16 h-10 object-cover shrink-0" />
+                                )}
+                                <span
+                                  className={`text-sm min-w-0 truncate flex-1 ${v.done ? "text-[var(--faint)] line-through" : ""}`}
+                                  title={v.title}
+                                >
+                                  {v.title}
+                                </span>
+                                <button
+                                  onClick={() => setWatchingVid(isWatching ? null : watchKey)}
+                                  className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest shrink-0"
+                                >
+                                  {isWatching ? "close" : "watch"}
+                                </button>
+                                <a
+                                  href={`https://www.youtube.com/watch?v=${v.videoId}&list=${r.playlistId}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest shrink-0"
+                                  title="open on youtube"
+                                >
+                                  ↗
+                                </a>
+                              </div>
+                              {isWatching && (
+                                <EmbeddedPlayer
+                                  videoId={v.videoId}
+                                  alreadyDone={v.done}
+                                  onComplete={() => {
+                                    if (!v.done) toggleVideo(r.id, v.videoId);
+                                  }}
+                                />
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </li>
