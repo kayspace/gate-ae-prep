@@ -556,6 +556,10 @@ function ResourcesView({
   const [apiKey, setApiKey] = useState<string>("");
   const [showKey, setShowKey] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editUrl, setEditUrl] = useState("");
+  const [watchingVid, setWatchingVid] = useState<string | null>(null);
 
   useEffect(() => {
     setApiKey(typeof window === "undefined" ? "" : (localStorage.getItem(YT_KEY) || ""));
