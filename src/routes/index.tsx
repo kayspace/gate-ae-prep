@@ -431,6 +431,117 @@ function BooksView() {
   );
 }
 
+// ---- YouTube IFrame Player API loader (singleton) ----
+let ytApiPromise: Promise<any> | null = null;
+function loadYouTubeAPI(): Promise<any> {
+  if (typeof window === "undefined") return Promise.reject(new Error("no window"));
+  const w = window as any;
+  if (w.YT && w.YT.Player) return Promise.resolve(w.YT);
+  if (ytApiPromise) return ytApiPromise;
+  ytApiPromise = new Promise((resolve) => {
+    const prev = w.onYouTubeIframeAPIReady;
+    w.onYouTubeIframeAPIReady = () => {
+      prev && prev();
+      resolve(w.YT);
+    };
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+  });
+  return ytApiPromise;
+}
+
+// Anti-skip: only count time deltas that look like real playback (≤2.5s — covers up to 2x speed).
+// Mark done when watched ≥ 90% of duration.
+function EmbeddedPlayer({
+  videoId,
+  alreadyDone,
+  onComplete,
+}: {
+  videoId: string;
+  alreadyDone: boolean;
+  onComplete: () => void;
+}) {
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const playerRef = useRef<any>(null);
+  const tickRef = useRef<number | null>(null);
+  const watchedRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const completedRef = useRef(alreadyDone);
+  const [pct, setPct] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    let player: any = null;
+    loadYouTubeAPI().then((YT) => {
+      if (cancelled || !hostRef.current) return;
+      player = new YT.Player(hostRef.current, {
+        videoId,
+        playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
+        events: {
+          onStateChange: (e: any) => {
+            if (e.data === YT.PlayerState.PLAYING) startTick();
+            else stopTick();
+          },
+        },
+      });
+      playerRef.current = player;
+    });
+
+    const startTick = () => {
+      if (tickRef.current != null) return;
+      lastTimeRef.current = playerRef.current?.getCurrentTime?.() || 0;
+      tickRef.current = window.setInterval(() => {
+        const p = playerRef.current;
+        if (!p?.getCurrentTime) return;
+        const t = p.getCurrentTime();
+        const d = p.getDuration?.() || 0;
+        const delta = t - lastTimeRef.current;
+        // Real playback delta is ~1s × playbackRate (≤ 2x → ≤ 2s; allow 2.5s buffer).
+        // Negative or large deltas = seek/jump → ignore but resync.
+        if (delta > 0 && delta <= 2.5) watchedRef.current += delta;
+        lastTimeRef.current = t;
+        if (d > 0) {
+          const ratio = watchedRef.current / d;
+          setPct(Math.min(1, ratio));
+          if (!completedRef.current && ratio >= 0.9) {
+            completedRef.current = true;
+            onComplete();
+          }
+        }
+      }, 1000);
+    };
+    const stopTick = () => {
+      if (tickRef.current != null) {
+        clearInterval(tickRef.current);
+        tickRef.current = null;
+      }
+    };
+
+    return () => {
+      cancelled = true;
+      stopTick();
+      try { playerRef.current?.destroy?.(); } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoId]);
+
+  return (
+    <div className="mt-3">
+      <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
+        <div ref={hostRef} className="absolute inset-0 w-full h-full bg-black" />
+      </div>
+      <div className="mt-2 flex items-center gap-3 mono text-[10px] text-[var(--muted)] uppercase tracking-widest">
+        <span>watched {Math.round(pct * 100)}%</span>
+        <div className="flex-1 h-px bg-[var(--line)] relative overflow-hidden">
+          <div className="absolute inset-y-0 left-0 bg-[var(--fg)]" style={{ width: `${Math.round(pct * 100)}%` }} />
+        </div>
+        <span>{completedRef.current ? "✓ done" : "auto-ticks at 90%"}</span>
+      </div>
+    </div>
+  );
+}
+
 function ResourcesView({
   resources,
   setResources,
