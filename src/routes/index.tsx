@@ -815,31 +815,58 @@ function ResourcesView({
 
                     {isPlaylist && open && r.videos && r.videos.length > 0 && (
                       <ul className="mt-4 divide-y divide-[var(--line)]">
-                        {r.videos.map((v, idx) => (
-                          <li key={v.videoId} className="py-2 flex items-center gap-3">
-                            <input
-                              type="checkbox"
-                              className="check shrink-0"
-                              checked={v.done}
-                              onChange={() => toggleVideo(r.id, v.videoId)}
-                            />
-                            <span className="mono text-[10px] text-[var(--faint)] w-6 shrink-0">
-                              {String(idx + 1).padStart(2, "0")}
-                            </span>
-                            {v.thumb && (
-                              <img src={v.thumb} alt="" loading="lazy" className="w-16 h-10 object-cover shrink-0" />
-                            )}
-                            <a
-                              href={`https://www.youtube.com/watch?v=${v.videoId}&list=${r.playlistId}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className={`text-sm min-w-0 truncate link-u ${v.done ? "text-[var(--faint)] line-through" : ""}`}
-                              title={v.title}
-                            >
-                              {v.title}
-                            </a>
-                          </li>
-                        ))}
+                        {r.videos.map((v, idx) => {
+                          const watchKey = `${r.id}::${v.videoId}`;
+                          const isWatching = watchingVid === watchKey;
+                          return (
+                            <li key={v.videoId} className="py-2">
+                              <div className="flex items-center gap-3">
+                                <input
+                                  type="checkbox"
+                                  className="check shrink-0"
+                                  checked={v.done}
+                                  onChange={() => toggleVideo(r.id, v.videoId)}
+                                />
+                                <span className="mono text-[10px] text-[var(--faint)] w-6 shrink-0">
+                                  {String(idx + 1).padStart(2, "0")}
+                                </span>
+                                {v.thumb && (
+                                  <img src={v.thumb} alt="" loading="lazy" className="w-16 h-10 object-cover shrink-0" />
+                                )}
+                                <span
+                                  className={`text-sm min-w-0 truncate flex-1 ${v.done ? "text-[var(--faint)] line-through" : ""}`}
+                                  title={v.title}
+                                >
+                                  {v.title}
+                                </span>
+                                <button
+                                  onClick={() => setWatchingVid(isWatching ? null : watchKey)}
+                                  className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest shrink-0"
+                                >
+                                  {isWatching ? "close" : "watch"}
+                                </button>
+                                <a
+                                  href={`https://www.youtube.com/watch?v=${v.videoId}&list=${r.playlistId}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest shrink-0"
+                                  title="open on youtube"
+                                >
+                                  ↗
+                                </a>
+                              </div>
+                              {isWatching && (
+                                <EmbeddedPlayer
+                                  videoId={v.videoId}
+                                  alreadyDone={v.done}
+                                  onComplete={() => {
+                                    if (!v.done) toggleVideo(r.id, v.videoId);
+                                  }}
+                                />
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </li>
