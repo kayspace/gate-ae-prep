@@ -13,6 +13,36 @@ const NOTES_KEY = "gate-ae-notes-v1";
 const RESOURCES_KEY = "gate-ae-resources-v2";
 const FORMULAS_KEY = "gate-ae-formulas-v1";
 const YT_KEY = "gate-ae-yt-key-v1";
+const WATCH_KEY = "gate-ae-watch-v1";
+
+type WatchState = { watched: number; pos: number; dur: number };
+type WatchMap = Record<string, WatchState>;
+
+function loadWatch(videoId: string): WatchState {
+  if (typeof window === "undefined") return { watched: 0, pos: 0, dur: 0 };
+  try {
+    const all = JSON.parse(localStorage.getItem(WATCH_KEY) || "{}") as WatchMap;
+    return all[videoId] || { watched: 0, pos: 0, dur: 0 };
+  } catch {
+    return { watched: 0, pos: 0, dur: 0 };
+  }
+}
+function saveWatch(videoId: string, s: WatchState) {
+  if (typeof window === "undefined") return;
+  try {
+    const all = JSON.parse(localStorage.getItem(WATCH_KEY) || "{}") as WatchMap;
+    all[videoId] = s;
+    localStorage.setItem(WATCH_KEY, JSON.stringify(all));
+  } catch {}
+}
+function clearWatchFor(videoIds: string[]) {
+  if (typeof window === "undefined" || videoIds.length === 0) return;
+  try {
+    const all = JSON.parse(localStorage.getItem(WATCH_KEY) || "{}") as WatchMap;
+    for (const id of videoIds) delete all[id];
+    localStorage.setItem(WATCH_KEY, JSON.stringify(all));
+  } catch {}
+}
 
 type Progress = Record<string, boolean>;
 type Notes = Record<string, string>;
@@ -468,21 +498,54 @@ function EmbeddedPlayer({
   const tickRef = useRef<number | null>(null);
   const watchedRef = useRef(0);
   const lastTimeRef = useRef(0);
+  const durRef = useRef(0);
+  const saveCounterRef = useRef(0);
   const completedRef = useRef(alreadyDone);
   const [pct, setPct] = useState(0);
+  const [resumeAt, setResumeAt] = useState(0);
+
+  // hydrate from localStorage once per videoId
+  useEffect(() => {
+    const s = loadWatch(videoId);
+    watchedRef.current = s.watched;
+    durRef.current = s.dur;
+    setResumeAt(s.pos);
+    if (s.dur > 0) setPct(Math.min(1, s.watched / s.dur));
+  }, [videoId]);
 
   useEffect(() => {
     let cancelled = false;
     let player: any = null;
+
+    const persist = () => {
+      saveWatch(videoId, {
+        watched: watchedRef.current,
+        pos: lastTimeRef.current,
+        dur: durRef.current,
+      });
+    };
+
     loadYouTubeAPI().then((YT) => {
       if (cancelled || !hostRef.current) return;
       player = new YT.Player(hostRef.current, {
         videoId,
-        playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
+        playerVars: { rel: 0, modestbranding: 1, playsinline: 1, start: Math.floor(resumeAt) || 0 },
         events: {
+          onReady: (e: any) => {
+            try {
+              const d = e.target.getDuration?.() || 0;
+              if (d > 0) durRef.current = d;
+              if (resumeAt > 1 && resumeAt < (d || Infinity) - 2) {
+                e.target.seekTo(resumeAt, true);
+              }
+            } catch {}
+          },
           onStateChange: (e: any) => {
             if (e.data === YT.PlayerState.PLAYING) startTick();
-            else stopTick();
+            else {
+              stopTick();
+              persist();
+            }
           },
         },
       });
@@ -496,10 +559,9 @@ function EmbeddedPlayer({
         const p = playerRef.current;
         if (!p?.getCurrentTime) return;
         const t = p.getCurrentTime();
-        const d = p.getDuration?.() || 0;
+        const d = p.getDuration?.() || durRef.current || 0;
+        if (d > 0) durRef.current = d;
         const delta = t - lastTimeRef.current;
-        // Real playback delta is ~1s × playbackRate (≤ 2x → ≤ 2s; allow 2.5s buffer).
-        // Negative or large deltas = seek/jump → ignore but resync.
         if (delta > 0 && delta <= 2.5) watchedRef.current += delta;
         lastTimeRef.current = t;
         if (d > 0) {
@@ -510,6 +572,9 @@ function EmbeddedPlayer({
             onComplete();
           }
         }
+        // save every ~3 ticks
+        saveCounterRef.current += 1;
+        if (saveCounterRef.current % 3 === 0) persist();
       }, 1000);
     };
     const stopTick = () => {
@@ -519,13 +584,20 @@ function EmbeddedPlayer({
       }
     };
 
+    const onVisibility = () => persist();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("beforeunload", persist);
+
     return () => {
       cancelled = true;
       stopTick();
+      persist();
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("beforeunload", persist);
       try { playerRef.current?.destroy?.(); } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoId]);
+  }, [videoId, resumeAt]);
 
   return (
     <div className="mt-3">
@@ -537,6 +609,9 @@ function EmbeddedPlayer({
         <div className="flex-1 h-px bg-[var(--line)] relative overflow-hidden">
           <div className="absolute inset-y-0 left-0 bg-[var(--fg)]" style={{ width: `${Math.round(pct * 100)}%` }} />
         </div>
+        {resumeAt > 1 && pct < 0.9 && (
+          <span>resumed @ {Math.floor(resumeAt / 60)}:{String(Math.floor(resumeAt % 60)).padStart(2, "0")}</span>
+        )}
         <span>{completedRef.current ? "✓ done" : "auto-ticks at 90%"}</span>
       </div>
     </div>
@@ -623,18 +698,27 @@ function ResourcesView({
 
   const remove = (id: string) => {
     const r = (resources[active] || []).find((x) => x.id === id);
-    const doneCount = r?.videos?.filter((v) => v.done).length || 0;
-    if (r?.kind === "playlist" && doneCount > 0) {
-      const ok = typeof window !== "undefined" && window.confirm(
-        `removing "${r.title}" — your progress (${doneCount}/${r.videos?.length} videos) will be lost. you'll have to start from scratch if you re-add it. continue?`,
-      );
-      if (!ok) return;
+    if (!r) return;
+    const doneCount = r.videos?.filter((v) => v.done).length || 0;
+    const total = r.videos?.length || 0;
+    let msg: string;
+    if (r.kind === "playlist") {
+      msg = doneCount > 0
+        ? `remove "${r.title}"?\n\nyour progress (${doneCount}/${total} videos completed + per-video watch positions) will be lost. you'll start from scratch if you re-add it.`
+        : `remove "${r.title}"?\n\nany saved watch positions for its videos will also be wiped.`;
+    } else {
+      msg = `remove "${r.title}"?`;
     }
+    const ok = typeof window !== "undefined" && window.confirm(msg);
+    if (!ok) return;
+    if (r.videos?.length) clearWatchFor(r.videos.map((v) => v.videoId));
+    if (watchingVid?.startsWith(`${r.id}::`)) setWatchingVid(null);
     setResources((prev) => ({
       ...prev,
       [active]: (prev[active] || []).filter((x) => x.id !== id),
     }));
   };
+
 
   const beginEdit = (resource: Resource) => {
     setEditingId(resource.id);
