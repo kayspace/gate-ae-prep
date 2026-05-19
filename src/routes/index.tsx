@@ -784,7 +784,7 @@ function ResourcesView({
       <h1 className="serif text-5xl mt-2 mb-6 lowercase">what you're watching</h1>
       <p className="text-sm text-[var(--muted)] max-w-2xl mb-8 leading-relaxed">
         paste any yt video, playlist, or link. playlists turn into courses — every video gets a tick
-        + progress bar. needs a free youtube data api key (one-time, saved to your browser).
+        + progress bar. needs a free youtube data api key (one-time, saved to your browser). see guide for full details.
       </p>
 
       {/* yt api key */}
@@ -1029,7 +1029,7 @@ function GuideView() {
             This is the core tracker. Each section contains core and special topics. Tick a topic
             when you finish it, and the app updates your completion percentage automatically.
           </p>
-          <ul className="list-disc pl-5">
+          <ul className="list-disc pl-5 mt-2 space-y-1">
             <li>mark topics complete as you study</li>
             <li>use the notes box to capture doubts or formula reminders</li>
             <li>section progress helps you focus where you need it most</li>
@@ -1042,7 +1042,9 @@ function GuideView() {
             This section shows PDFs by AE section. Keep your files grouped in the matching folder so
             they appear here cleanly.
           </p>
-          <p>Books are useful for quick access to your reference PDFs while studying.</p>
+          <p className="mt-2">
+            Books are useful for quick access to your reference PDFs while studying.
+          </p>
         </section>
 
         <section>
@@ -1051,19 +1053,83 @@ function GuideView() {
             Save videos, playlists, and links related to a section. This is the main place to
             collect your study media.
           </p>
-          <p>Use the section selector, add a title if you want, paste the URL, and click add.</p>
-          <p>
-            YouTube playlists become courses: the app can load each video, let you tick watched
-            videos, and show your playlist progress.
+          <p className="mt-2">
+            Use the section selector, add a title if you want, paste the URL, and click add.
           </p>
+          <p className="mt-2">
+            YouTube playlists become courses: the app loads each video with its title and thumbnail,
+            lets you tick videos as watched, and shows your playlist progress.
+          </p>
+
+          <div className="mt-4 space-y-4">
+            <div>
+              <h3 className="serif text-base mb-2 lowercase">watching videos</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  Each video has a <strong>watch button</strong> that opens the player directly
+                  inside the app — no leaving the page or dealing with YouTube's sidebar and distrcations from it. The{" "}
+                  <strong>external link</strong> is still available if you prefer to open it on
+                  YouTube.
+                </li>
+                <li>
+                  Watch at <strong>1x, 1.5x, or 2x speed</strong> and the app tracks how much of the
+                  video you have actually seen.
+                </li>
+                <li>
+                  <strong>Dragging the slider forward does not count</strong> as watched time. Only
+                  time spent actually watching is counted.
+                </li>
+                <li>
+                  A <strong>live progress bar</strong> below the player shows your watched
+                  percentage in real time.
+                </li>
+                <li>
+                  Once you reach <strong>90% watched</strong>, the video is{" "}
+                  <strong>automatically ticked as complete</strong>.
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="serif text-base mb-2 lowercase">progress is saved</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  Your watch progress for every video is{" "}
+                  <strong>saved automatically every few seconds</strong>, on pause, and when you
+                  close or switch tabs.
+                </li>
+                <li>
+                  If you switch to another section, close the browser, or come back days later,{" "}
+                  <strong>the player resumes from where you left off</strong> and your watched
+                  percentage is restored.
+                </li>
+                <li>You do not need to do anything for this to work.</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="serif text-base mb-2 lowercase">removing a playlist or link</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  Removing any playlist or link will show a{" "}
+                  <strong>confirmation dialog before anything is deleted</strong> — this applies to
+                  all removals, not just ones where you have finished videos.
+                </li>
+                <li>
+                  If you have watch progress on that playlist, the message will note that{" "}
+                  <strong>your saved progress will also be cleared</strong> along with the playlist.
+                </li>
+              </ul>
+            </div>
+          </div>
         </section>
 
         <section>
           <h2 className="serif text-xl mb-2 lowercase">youtube data api key</h2>
           <p>
             Playlist loading requires a YouTube Data API key. This key allows the app to fetch video
-            details from your playlists. It is free to set up and is a one-time process. The key is
-            stored only in your browser and never leaves your machine.
+            details from your playlists. It is free to set up and is a one-time process.{" "}
+            <strong>The key is stored only in your browser and never leaves your machine.</strong>
           </p>
 
           <div className="mt-4 space-y-4">
@@ -1163,7 +1229,10 @@ function GuideView() {
                   Click <strong>show</strong> to reveal the input field.
                 </li>
                 <li>Paste the key you copied (Ctrl+V or Cmd+V).</li>
-                <li>The app saves the key automatically. You should see a confirmation message.</li>
+                <li>
+                  <strong>The app saves the key automatically.</strong> You should see a
+                  confirmation message.
+                </li>
               </ol>
             </div>
           </div>
@@ -1172,17 +1241,17 @@ function GuideView() {
             <h3 className="serif text-base mb-1 lowercase">if something goes wrong</h3>
             <ul className="list-disc pl-5 space-y-1">
               <li>
-                <span className="mono">Error: Invalid API key</span> — check that you copied the
-                entire key. It must start with <span className="mono">AIza</span>.
+                <span className="mono">Error: Invalid API key</span> — check that you copied the{" "}
+                <strong>entire key</strong>. It must start with <span className="mono">AIza</span>.
               </li>
               <li>
                 <span className="mono">API not enabled</span> — go back to the Google Cloud console
-                and confirm you clicked ENABLE for YouTube Data API v3.
+                and confirm you clicked <strong>ENABLE</strong> for YouTube Data API v3.
               </li>
               <li>
                 <span className="mono">Quota exceeded</span> — the free tier allows a set number of
-                API calls per day. Wait 24 hours and try again. For normal prep use, hitting this
-                limit is unlikely.
+                API calls per day. <strong>Wait 24 hours and try again.</strong> For normal prep
+                use, hitting this limit is unlikely.
               </li>
             </ul>
           </div>
@@ -1191,15 +1260,17 @@ function GuideView() {
             <h3 className="serif text-base mb-1 lowercase">without a key</h3>
             <p>
               You can still save individual video links and general study links, and manually track
-              videos in your notes. What you cannot do is auto-load playlist videos with titles and
-              thumbnails, or track watch progress for entire playlists.
+              videos in your notes. What you <strong>cannot</strong> do is auto-load playlist videos
+              with titles and thumbnails, or track watch progress for entire playlists.
             </p>
           </div>
 
           <div className="mt-4">
             <h3 className="serif text-base mb-1 lowercase">security note</h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li>The key is stored locally in your browser only.</li>
+              <li>
+                <strong>The key is stored locally in your browser only.</strong>
+              </li>
               <li>It is not sent to any server except Google's API to fetch playlist data.</li>
               <li>You can delete or regenerate the key anytime from the Google Cloud console.</li>
               <li>Normal prep use will not exceed the free tier limits.</li>
@@ -1227,14 +1298,16 @@ function GuideView() {
           <h2 className="serif text-xl mb-2 lowercase">privacy</h2>
           <p>
             Your data stays in your browser. There is no login required, and nothing is stored on a
-            server. Clearing browser storage will delete your saved progress, notes, and resources.
+            server.{" "}
+            <strong>
+              Clearing browser storage will delete your saved progress, notes, and resources.
+            </strong>
           </p>
         </section>
       </div>
     </div>
   );
 }
-
 
 function FormulasView({
   formulas,
