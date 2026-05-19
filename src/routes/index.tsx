@@ -26,7 +26,7 @@ type Resource = {
   videos?: PlaylistVideo[];
   loading?: boolean;
   error?: string;
-  source?: "default" | "custom";
+  source?: "default" | "custom" | "recommended";
 };
 type Resources = Record<string, Resource[]>;
 type Formulas = Record<string, string>;
