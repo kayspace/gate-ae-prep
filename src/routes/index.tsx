@@ -13,6 +13,36 @@ const NOTES_KEY = "gate-ae-notes-v1";
 const RESOURCES_KEY = "gate-ae-resources-v2";
 const FORMULAS_KEY = "gate-ae-formulas-v1";
 const YT_KEY = "gate-ae-yt-key-v1";
+const WATCH_KEY = "gate-ae-watch-v1";
+
+type WatchState = { watched: number; pos: number; dur: number };
+type WatchMap = Record<string, WatchState>;
+
+function loadWatch(videoId: string): WatchState {
+  if (typeof window === "undefined") return { watched: 0, pos: 0, dur: 0 };
+  try {
+    const all = JSON.parse(localStorage.getItem(WATCH_KEY) || "{}") as WatchMap;
+    return all[videoId] || { watched: 0, pos: 0, dur: 0 };
+  } catch {
+    return { watched: 0, pos: 0, dur: 0 };
+  }
+}
+function saveWatch(videoId: string, s: WatchState) {
+  if (typeof window === "undefined") return;
+  try {
+    const all = JSON.parse(localStorage.getItem(WATCH_KEY) || "{}") as WatchMap;
+    all[videoId] = s;
+    localStorage.setItem(WATCH_KEY, JSON.stringify(all));
+  } catch {}
+}
+function clearWatchFor(videoIds: string[]) {
+  if (typeof window === "undefined" || videoIds.length === 0) return;
+  try {
+    const all = JSON.parse(localStorage.getItem(WATCH_KEY) || "{}") as WatchMap;
+    for (const id of videoIds) delete all[id];
+    localStorage.setItem(WATCH_KEY, JSON.stringify(all));
+  } catch {}
+}
 
 type Progress = Record<string, boolean>;
 type Notes = Record<string, string>;
