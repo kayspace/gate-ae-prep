@@ -717,22 +717,27 @@ function ResourcesView({
     if (!r) return;
     const doneCount = r.videos?.filter((v) => v.done).length || 0;
     const total = r.videos?.length || 0;
-    let msg: string;
+    let message: string;
     if (r.kind === "playlist") {
-      msg = doneCount > 0
-        ? `remove "${r.title}"?\n\nyour progress (${doneCount}/${total} videos completed + per-video watch positions) will be lost. you'll start from scratch if you re-add it.`
-        : `remove "${r.title}"?\n\nany saved watch positions for its videos will also be wiped.`;
+      message = doneCount > 0
+        ? `remove "${r.title}"? your progress (${doneCount}/${total} videos completed + per-video watch positions) will be lost. you'll start from scratch if you re-add it.`
+        : `remove "${r.title}"? any saved watch positions for its videos will also be wiped.`;
     } else {
-      msg = `remove "${r.title}"?`;
+      message = `remove "${r.title}"?`;
     }
-    const ok = typeof window !== "undefined" && window.confirm(msg);
-    if (!ok) return;
-    if (r.videos?.length) clearWatchFor(r.videos.map((v) => v.videoId));
-    if (watchingVid?.startsWith(`${r.id}::`)) setWatchingVid(null);
-    setResources((prev) => ({
-      ...prev,
-      [active]: (prev[active] || []).filter((x) => x.id !== id),
-    }));
+    setConfirmState({
+      title: "remove resource",
+      message,
+      confirmLabel: "remove",
+      onConfirm: () => {
+        if (r.videos?.length) clearWatchFor(r.videos.map((v) => v.videoId));
+        if (watchingVid?.startsWith(`${r.id}::`)) setWatchingVid(null);
+        setResources((prev) => ({
+          ...prev,
+          [active]: (prev[active] || []).filter((x) => x.id !== id),
+        }));
+      },
+    });
   };
 
 
