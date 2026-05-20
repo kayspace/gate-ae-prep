@@ -59,7 +59,8 @@ type Resource = {
   source?: "default" | "custom" | "recommended";
 };
 type Resources = Record<string, Resource[]>;
-type Formulas = Record<string, string>;
+type ReviseItem = { id: string; text: string; done: boolean; createdAt: number };
+type Revisions = Record<string, ReviseItem[]>;
 
 const DEFAULT_RESOURCES: Resources = {
   aptitude: [
