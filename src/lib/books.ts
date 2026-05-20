@@ -29,9 +29,9 @@ export const books: Record<string, Book[]> = {
   "math": [],
   "propulsion": [
     {
-      "name": "Introduction to flight 8th edition",
-      "file": "Introduction to flight 8th edition.pdf",
-      "size": 14485542
+      "name": "GAS TURBINE THEORY BY HIH SARAVANAMUTTOO, H. COHEN & GFC ROGERS",
+      "file": "GAS TURBINE THEORY BY HIH SARAVANAMUTTOO, H. COHEN & GFC ROGERS.pdf",
+      "size": 9453559
     }
   ],
   "space": [
