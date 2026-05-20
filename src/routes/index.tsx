@@ -178,7 +178,63 @@ function fmtSize(n: number) {
   return `${Math.round(n / 1024)} kb`;
 }
 
-type ViewKey = "syllabus" | "books" | "resources" | "revise" | "log";
+type ViewKey = "syllabus" | "books" | "resources" | "revise" | "log" | "guide";
+
+function ConfirmModal({
+  open,
+  title,
+  message,
+  confirmLabel = "confirm",
+  cancelLabel = "cancel",
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+      if (e.key === "Enter") onConfirm();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onCancel, onConfirm]);
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-6"
+      style={{ background: "color-mix(in oklab, var(--fg) 35%, transparent)" }}
+      onClick={onCancel}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md bg-[var(--bg)] border border-[var(--fg)] p-6 fade-in"
+        style={{ opacity: 1, transform: "none" }}
+      >
+        <div className="section-num mb-2">prompt</div>
+        <h2 className="serif text-2xl lowercase mb-3">{title}</h2>
+        <p className="text-sm text-[var(--muted)] leading-relaxed mb-6 whitespace-pre-line">
+          {message}
+        </p>
+        <div className="flex justify-end gap-2">
+          <button onClick={onCancel} className="btn-ghost">
+            {cancelLabel}
+          </button>
+          <button onClick={onConfirm} className="btn-ghost active">
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Home() {
   const [progress, setProgress] = useState<Progress>({});
@@ -255,7 +311,7 @@ function Home() {
       </div>
 
       <nav className="px-6 md:px-10 pt-6 pb-8 flex gap-2 flex-wrap">
-        {(["syllabus", "books", "resources", "revise", "log"] as const).map((v) => (
+        {(["syllabus", "books", "resources", "revise", "log", "guide"] as const).map((v) => (
           <button
             key={v}
             onClick={() => setView(v)}
@@ -388,6 +444,7 @@ function Home() {
       {view === "resources" && <ResourcesView resources={resources} setResources={setResources} />}
       {view === "revise" && <ReviseView revisions={revisions} setRevisions={setRevisions} />}
       {view === "log" && <LogView progress={progress} resources={resources} />}
+      {view === "guide" && <GuideView />}
 
       <footer className="px-6 md:px-10 py-10 mt-20 border-t border-[var(--line)] flex flex-wrap gap-4 justify-between items-baseline">
         <span className="mono text-[10px] text-[var(--faint)] tracking-widest">
@@ -643,6 +700,13 @@ function ResourcesView({
   const [editTitle, setEditTitle] = useState("");
   const [editUrl, setEditUrl] = useState("");
   const [watchingVid, setWatchingVid] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
+
 
   useEffect(() => {
     setApiKey(typeof window === "undefined" ? "" : localStorage.getItem(YT_KEY) || "");
@@ -710,22 +774,28 @@ function ResourcesView({
     if (!r) return;
     const doneCount = r.videos?.filter((v) => v.done).length || 0;
     const total = r.videos?.length || 0;
-    let msg: string;
+    let message: string;
     if (r.kind === "playlist") {
-      msg = doneCount > 0
-        ? `remove "${r.title}"?\n\nyour progress (${doneCount}/${total} videos completed + per-video watch positions) will be lost. you'll start from scratch if you re-add it.`
-        : `remove "${r.title}"?\n\nany saved watch positions for its videos will also be wiped.`;
+      message =
+        doneCount > 0
+          ? `remove "${r.title}"? your progress (${doneCount}/${total} videos completed + per-video watch positions) will be lost. you'll start from scratch if you re-add it.`
+          : `remove "${r.title}"? any saved watch positions for its videos will also be wiped.`;
     } else {
-      msg = `remove "${r.title}"?`;
+      message = `remove "${r.title}"?`;
     }
-    const ok = typeof window !== "undefined" && window.confirm(msg);
-    if (!ok) return;
-    if (r.videos?.length) clearWatchFor(r.videos.map((v) => v.videoId));
-    if (watchingVid?.startsWith(`${r.id}::`)) setWatchingVid(null);
-    setResources((prev) => ({
-      ...prev,
-      [active]: (prev[active] || []).filter((x) => x.id !== id),
-    }));
+    setConfirmState({
+      title: "remove resource",
+      message,
+      confirmLabel: "remove",
+      onConfirm: () => {
+        if (r.videos?.length) clearWatchFor(r.videos.map((v) => v.videoId));
+        if (watchingVid?.startsWith(`${r.id}::`)) setWatchingVid(null);
+        setResources((prev) => ({
+          ...prev,
+          [active]: (prev[active] || []).filter((x) => x.id !== id),
+        }));
+      },
+    });
   };
 
 
