@@ -255,7 +255,7 @@ function Home() {
       </div>
 
       <nav className="px-6 md:px-10 pt-6 pb-8 flex gap-2 flex-wrap">
-        {(["syllabus", "books", "resources", "revise", "log"] as const).map((v) => (
+        {(["syllabus", "books", "resources", "revise", "log", "guide"] as const).map((v) => (
           <button
             key={v}
             onClick={() => setView(v)}
