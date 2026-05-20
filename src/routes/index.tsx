@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
 const STORAGE_KEY = "gate-ae-progress-v1";
 const NOTES_KEY = "gate-ae-notes-v1";
 const RESOURCES_KEY = "gate-ae-resources-v2";
-const FORMULAS_KEY = "gate-ae-formulas-v1";
+const REVISE_KEY = "gate-ae-revise-v1";
 const YT_KEY = "gate-ae-yt-key-v1";
 const WATCH_KEY = "gate-ae-watch-v1";
 
@@ -59,7 +59,8 @@ type Resource = {
   source?: "default" | "custom" | "recommended";
 };
 type Resources = Record<string, Resource[]>;
-type Formulas = Record<string, string>;
+type ReviseItem = { id: string; text: string; done: boolean; createdAt: number };
+type Revisions = Record<string, ReviseItem[]>;
 
 const DEFAULT_RESOURCES: Resources = {
   aptitude: [
@@ -177,13 +178,13 @@ function fmtSize(n: number) {
   return `${Math.round(n / 1024)} kb`;
 }
 
-type ViewKey = "syllabus" | "books" | "resources" | "formulas" | "log" | "guide";
+type ViewKey = "syllabus" | "books" | "resources" | "revise" | "log";
 
 function Home() {
   const [progress, setProgress] = useState<Progress>({});
   const [notes, setNotes] = useState<Notes>({});
   const [resources, setResources] = useState<Resources>({});
-  const [formulas, setFormulas] = useState<Formulas>({});
+  const [revisions, setRevisions] = useState<Revisions>({});
   const [active, setActive] = useState<string>("aptitude");
   const [view, setView] = useState<ViewKey>("syllabus");
   const mainRef = useRef<HTMLDivElement>(null);
@@ -195,7 +196,7 @@ function Home() {
     const v2 = loadJSON<Resources | null>(RESOURCES_KEY, null);
     if (v2) setResources(v2);
     else setResources(loadJSON("gate-ae-resources-v1", {}));
-    setFormulas(loadJSON(FORMULAS_KEY, {}));
+    setRevisions(loadJSON(REVISE_KEY, {}));
   }, []);
 
   useEffect(() => {
@@ -208,8 +209,8 @@ function Home() {
     localStorage.setItem(RESOURCES_KEY, JSON.stringify(resources));
   }, [resources]);
   useEffect(() => {
-    localStorage.setItem(FORMULAS_KEY, JSON.stringify(formulas));
-  }, [formulas]);
+    localStorage.setItem(REVISE_KEY, JSON.stringify(revisions));
+  }, [revisions]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -254,7 +255,7 @@ function Home() {
       </div>
 
       <nav className="px-6 md:px-10 pt-6 pb-8 flex gap-2 flex-wrap">
-        {(["syllabus", "books", "resources", "formulas", "log", "guide"] as const).map((v) => (
+        {(["syllabus", "books", "resources", "revise", "log"] as const).map((v) => (
           <button
             key={v}
             onClick={() => setView(v)}
@@ -385,8 +386,7 @@ function Home() {
 
       {view === "books" && <BooksView />}
       {view === "resources" && <ResourcesView resources={resources} setResources={setResources} />}
-      {view === "guide" && <GuideView />}
-      {view === "formulas" && <FormulasView formulas={formulas} setFormulas={setFormulas} />}
+      {view === "revise" && <ReviseView revisions={revisions} setRevisions={setRevisions} />}
       {view === "log" && <LogView progress={progress} resources={resources} />}
 
       <footer className="px-6 md:px-10 py-10 mt-20 border-t border-[var(--line)] flex flex-wrap gap-4 justify-between items-baseline">
@@ -1309,41 +1309,128 @@ function GuideView() {
   );
 }
 
-function FormulasView({
-  formulas,
-  setFormulas,
+function ReviseView({
+  revisions,
+  setRevisions,
 }: {
-  formulas: Formulas;
-  setFormulas: React.Dispatch<React.SetStateAction<Formulas>>;
+  revisions: Revisions;
+  setRevisions: React.Dispatch<React.SetStateAction<Revisions>>;
 }) {
   const [active, setActive] = useState<string>("aptitude");
+  const [draft, setDraft] = useState("");
+  const items = revisions[active] || [];
+  const pending = items.filter((i) => !i.done);
+  const doneCount = items.length - pending.length;
+
+  const add = () => {
+    const t = draft.trim();
+    if (!t) return;
+    const item: ReviseItem = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      text: t,
+      done: false,
+      createdAt: Date.now(),
+    };
+    setRevisions((r) => ({ ...r, [active]: [item, ...(r[active] || [])] }));
+    setDraft("");
+  };
+  const toggle = (id: string) =>
+    setRevisions((r) => ({
+      ...r,
+      [active]: (r[active] || []).map((i) => (i.id === id ? { ...i, done: !i.done } : i)),
+    }));
+  const remove = (id: string) =>
+    setRevisions((r) => ({
+      ...r,
+      [active]: (r[active] || []).filter((i) => i.id !== id),
+    }));
+  const clearDone = () => {
+    if (doneCount === 0) return;
+    if (!window.confirm(`clear ${doneCount} revised item${doneCount > 1 ? "s" : ""}?`)) return;
+    setRevisions((r) => ({ ...r, [active]: (r[active] || []).filter((i) => !i.done) }));
+  };
+
   return (
     <div className="px-6 md:px-12 py-10 fade-in">
-      <div className="section-num">formulas · cheatsheets</div>
-      <h1 className="serif text-5xl mt-2 mb-6 lowercase">formula sheets</h1>
+      <div className="section-num">revise · queue</div>
+      <h1 className="serif text-5xl mt-2 mb-6 lowercase">to be revised</h1>
       <p className="text-sm text-[var(--muted)] max-w-xl mb-8 leading-relaxed">
-        one per section. dump the formulas you need to remember. plain text, saves locally.
+        track topics, problems, and assignments you need to come back to. tick them off as you revise. saves locally.
       </p>
 
       <div className="flex gap-2 flex-wrap mb-6">
-        {syllabus.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => setActive(s.id)}
-            className={`btn-ghost ${active === s.id ? "active" : ""}`}
-          >
-            {s.title.toLowerCase()}
-          </button>
-        ))}
+        {syllabus.map((s) => {
+          const c = (revisions[s.id] || []).filter((i) => !i.done).length;
+          return (
+            <button
+              key={s.id}
+              onClick={() => setActive(s.id)}
+              className={`btn-ghost ${active === s.id ? "active" : ""}`}
+            >
+              {s.title.toLowerCase()}
+              {c > 0 && <span className="ml-2 mono text-[10px] text-[var(--muted)]">{c}</span>}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="fade-in">
-        <textarea
-          value={formulas[active] || ""}
-          onChange={(e) => setFormulas((f) => ({ ...f, [active]: e.target.value }))}
-          placeholder={`formulas for ${active}...\n\nlift = 0.5 * rho * v^2 * S * Cl\n...`}
-          className="w-full min-h-[60vh] text-sm mono leading-relaxed border border-[var(--line)] p-4 focus:border-[var(--fg)] transition-colors"
-        />
+      <div className="fade-in max-w-3xl">
+        <div className="flex gap-2 mb-6">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") add();
+            }}
+            placeholder="e.g. revisit thin airfoil theory derivation, redo problem set 3 q4..."
+            className="flex-1 text-sm border border-[var(--line)] bg-transparent px-3 py-2 focus:border-[var(--fg)] outline-none transition-colors"
+          />
+          <button onClick={add} className="btn-ghost active px-4">
+            add
+          </button>
+        </div>
+
+        <div className="flex items-baseline justify-between mb-3">
+          <span className="mono text-[10px] text-[var(--faint)] uppercase tracking-widest">
+            {pending.length} pending · {doneCount} revised
+          </span>
+          {doneCount > 0 && (
+            <button onClick={clearDone} className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest">
+              clear revised
+            </button>
+          )}
+        </div>
+
+        {items.length === 0 ? (
+          <div className="text-sm text-[var(--faint)] py-8 italic">
+            nothing queued for {active}. add something above.
+          </div>
+        ) : (
+          <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+            {items.map((i) => (
+              <li key={i.id} className="flex items-start gap-3 py-3 group">
+                <input
+                  type="checkbox"
+                  checked={i.done}
+                  onChange={() => toggle(i.id)}
+                  className="mt-1 cursor-pointer accent-[var(--fg)]"
+                />
+                <span
+                  className={`flex-1 text-sm leading-relaxed ${i.done ? "line-through text-[var(--faint)]" : ""}`}
+                >
+                  {i.text}
+                </span>
+                <button
+                  onClick={() => remove(i.id)}
+                  className="mono text-[10px] text-[var(--faint)] hover:text-[var(--fg)] opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="remove"
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
