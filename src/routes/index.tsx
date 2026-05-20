@@ -177,13 +177,13 @@ function fmtSize(n: number) {
   return `${Math.round(n / 1024)} kb`;
 }
 
-type ViewKey = "syllabus" | "books" | "resources" | "formulas" | "log";
+type ViewKey = "syllabus" | "books" | "resources" | "revise" | "log";
 
 function Home() {
   const [progress, setProgress] = useState<Progress>({});
   const [notes, setNotes] = useState<Notes>({});
   const [resources, setResources] = useState<Resources>({});
-  const [formulas, setFormulas] = useState<Formulas>({});
+  const [revisions, setRevisions] = useState<Revisions>({});
   const [active, setActive] = useState<string>("aptitude");
   const [view, setView] = useState<ViewKey>("syllabus");
   const mainRef = useRef<HTMLDivElement>(null);
@@ -195,7 +195,7 @@ function Home() {
     const v2 = loadJSON<Resources | null>(RESOURCES_KEY, null);
     if (v2) setResources(v2);
     else setResources(loadJSON("gate-ae-resources-v1", {}));
-    setFormulas(loadJSON(FORMULAS_KEY, {}));
+    setRevisions(loadJSON(REVISE_KEY, {}));
   }, []);
 
   useEffect(() => {
@@ -208,8 +208,8 @@ function Home() {
     localStorage.setItem(RESOURCES_KEY, JSON.stringify(resources));
   }, [resources]);
   useEffect(() => {
-    localStorage.setItem(FORMULAS_KEY, JSON.stringify(formulas));
-  }, [formulas]);
+    localStorage.setItem(REVISE_KEY, JSON.stringify(revisions));
+  }, [revisions]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
