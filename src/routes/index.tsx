@@ -178,7 +178,7 @@ function fmtSize(n: number) {
   return `${Math.round(n / 1024)} kb`;
 }
 
-type ViewKey = "syllabus" | "books" | "resources" | "revise" | "log";
+type ViewKey = "syllabus" | "books" | "resources" | "revise" | "log" | "guide";
 
 function Home() {
   const [progress, setProgress] = useState<Progress>({});
