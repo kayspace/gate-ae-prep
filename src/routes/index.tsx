@@ -792,6 +792,17 @@ function ResourcesView({
 
   return (
     <div className="px-6 md:px-12 py-10 fade-in">
+      <ConfirmModal
+        open={!!confirmState}
+        title={confirmState?.title || ""}
+        message={confirmState?.message || ""}
+        confirmLabel={confirmState?.confirmLabel}
+        onCancel={() => setConfirmState(null)}
+        onConfirm={() => {
+          confirmState?.onConfirm();
+          setConfirmState(null);
+        }}
+      />
       <div className="section-num">resources · videos & courses</div>
       <h1 className="serif text-5xl mt-2 mb-6 lowercase">what you're watching</h1>
       <p className="text-sm text-[var(--muted)] max-w-2xl mb-8 leading-relaxed">
