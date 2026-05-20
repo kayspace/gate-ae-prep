@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
 const STORAGE_KEY = "gate-ae-progress-v1";
 const NOTES_KEY = "gate-ae-notes-v1";
 const RESOURCES_KEY = "gate-ae-resources-v2";
-const FORMULAS_KEY = "gate-ae-formulas-v1";
+const REVISE_KEY = "gate-ae-revise-v1";
 const YT_KEY = "gate-ae-yt-key-v1";
 const WATCH_KEY = "gate-ae-watch-v1";
 
