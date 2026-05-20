@@ -206,6 +206,7 @@ function ConfirmModal({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onCancel, onConfirm]);
+
   if (!open) return null;
   return (
     <div
@@ -707,7 +708,6 @@ function ResourcesView({
     onConfirm: () => void;
   } | null>(null);
 
-
   useEffect(() => {
     setApiKey(typeof window === "undefined" ? "" : localStorage.getItem(YT_KEY) || "");
   }, []);
@@ -776,10 +776,9 @@ function ResourcesView({
     const total = r.videos?.length || 0;
     let message: string;
     if (r.kind === "playlist") {
-      message =
-        doneCount > 0
-          ? `remove "${r.title}"? your progress (${doneCount}/${total} videos completed + per-video watch positions) will be lost. you'll start from scratch if you re-add it.`
-          : `remove "${r.title}"? any saved watch positions for its videos will also be wiped.`;
+      message = doneCount > 0
+        ? `remove "${r.title}"? your progress (${doneCount}/${total} videos completed + per-video watch positions) will be lost. you'll start from scratch if you re-add it.`
+        : `remove "${r.title}"? any saved watch positions for its videos will also be wiped.`;
     } else {
       message = `remove "${r.title}"?`;
     }
