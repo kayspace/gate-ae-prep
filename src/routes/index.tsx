@@ -850,11 +850,23 @@ function ResourcesView({
 
   return (
     <div className="px-6 md:px-12 py-10 fade-in">
+      <ConfirmModal
+        open={!!confirmState}
+        title={confirmState?.title || ""}
+        message={confirmState?.message || ""}
+        confirmLabel={confirmState?.confirmLabel}
+        onCancel={() => setConfirmState(null)}
+        onConfirm={() => {
+          confirmState?.onConfirm();
+          setConfirmState(null);
+        }}
+      />
       <div className="section-num">resources · videos & courses</div>
       <h1 className="serif text-5xl mt-2 mb-6 lowercase">what you're watching</h1>
       <p className="text-sm text-[var(--muted)] max-w-2xl mb-8 leading-relaxed">
         paste any yt video, playlist, or link. playlists turn into courses — every video gets a tick
-        + progress bar. needs a free youtube data api key (one-time, saved to your browser). see guide for full details.
+        + progress bar. needs a free youtube data api key (one-time, saved to your browser). see
+        guide for full details.
       </p>
 
       {/* yt api key */}
@@ -1030,7 +1042,12 @@ function ResourcesView({
                                   {String(idx + 1).padStart(2, "0")}
                                 </span>
                                 {v.thumb && (
-                                  <img src={v.thumb} alt="" loading="lazy" className="w-16 h-10 object-cover shrink-0" />
+                                  <img
+                                    src={v.thumb}
+                                    alt=""
+                                    loading="lazy"
+                                    className="w-16 h-10 object-cover shrink-0"
+                                  />
                                 )}
                                 <span
                                   className={`text-sm min-w-0 truncate flex-1 ${v.done ? "text-[var(--faint)] line-through" : ""}`}
