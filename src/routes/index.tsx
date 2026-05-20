@@ -385,7 +385,7 @@ function Home() {
 
       {view === "books" && <BooksView />}
       {view === "resources" && <ResourcesView resources={resources} setResources={setResources} />}
-      {view === "formulas" && <FormulasView formulas={formulas} setFormulas={setFormulas} />}
+      {view === "revise" && <ReviseView revisions={revisions} setRevisions={setRevisions} />}
       {view === "log" && <LogView progress={progress} resources={resources} />}
 
       <footer className="px-6 md:px-10 py-10 mt-20 border-t border-[var(--line)] flex flex-wrap gap-4 justify-between items-baseline">
