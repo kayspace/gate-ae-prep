@@ -18,28 +18,35 @@ const WATCH_KEY = "gate-ae-watch-v1";
 type WatchState = { watched: number; pos: number; dur: number };
 type WatchMap = Record<string, WatchState>;
 
-function loadWatch(videoId: string): WatchState {
+function loadWatch(key: string, fallbackKey?: string): WatchState {
   if (typeof window === "undefined") return { watched: 0, pos: 0, dur: 0 };
   try {
     const all = JSON.parse(localStorage.getItem(WATCH_KEY) || "{}") as WatchMap;
-    return all[videoId] || { watched: 0, pos: 0, dur: 0 };
+    if (all[key]) return all[key];
+    if (fallbackKey && all[fallbackKey]) {
+      const fallback = all[fallbackKey];
+      all[key] = fallback;
+      localStorage.setItem(WATCH_KEY, JSON.stringify(all));
+      return fallback;
+    }
+    return { watched: 0, pos: 0, dur: 0 };
   } catch {
     return { watched: 0, pos: 0, dur: 0 };
   }
 }
-function saveWatch(videoId: string, s: WatchState) {
+function saveWatch(key: string, s: WatchState) {
   if (typeof window === "undefined") return;
   try {
     const all = JSON.parse(localStorage.getItem(WATCH_KEY) || "{}") as WatchMap;
-    all[videoId] = s;
+    all[key] = s;
     localStorage.setItem(WATCH_KEY, JSON.stringify(all));
   } catch {}
 }
-function clearWatchFor(videoIds: string[]) {
-  if (typeof window === "undefined" || videoIds.length === 0) return;
+function clearWatchFor(keys: string[]) {
+  if (typeof window === "undefined" || keys.length === 0) return;
   try {
     const all = JSON.parse(localStorage.getItem(WATCH_KEY) || "{}") as WatchMap;
-    for (const id of videoIds) delete all[id];
+    for (const id of keys) delete all[id];
     localStorage.setItem(WATCH_KEY, JSON.stringify(all));
   } catch {}
 }
@@ -558,10 +565,12 @@ function loadYouTubeAPI(): Promise<any> {
 // Mark done when watched ≥ 90% of duration.
 function EmbeddedPlayer({
   videoId,
+  watchKey,
   alreadyDone,
   onComplete,
 }: {
   videoId: string;
+  watchKey: string;
   alreadyDone: boolean;
   onComplete: () => void;
 }) {
@@ -576,21 +585,21 @@ function EmbeddedPlayer({
   const [pct, setPct] = useState(0);
   const [resumeAt, setResumeAt] = useState(0);
 
-  // hydrate from localStorage once per videoId
+  // hydrate from localStorage once per watchKey
   useEffect(() => {
-    const s = loadWatch(videoId);
+    const s = loadWatch(watchKey, videoId);
     watchedRef.current = s.watched;
     durRef.current = s.dur;
     setResumeAt(s.pos);
     if (s.dur > 0) setPct(Math.min(1, s.watched / s.dur));
-  }, [videoId]);
+  }, [watchKey, videoId]);
 
   useEffect(() => {
     let cancelled = false;
     let player: any = null;
 
     const persist = () => {
-      saveWatch(videoId, {
+      saveWatch(watchKey, {
         watched: watchedRef.current,
         pos: lastTimeRef.current,
         dur: durRef.current,
@@ -790,9 +799,10 @@ function ResourcesView({
     const total = r.videos?.length || 0;
     let message: string;
     if (r.kind === "playlist") {
-      message = doneCount > 0
-        ? `remove "${r.title}"? your progress (${doneCount}/${total} videos completed + per-video watch positions) will be lost. you'll start from scratch if you re-add it.`
-        : `remove "${r.title}"? any saved watch positions for its videos will also be wiped.`;
+      message =
+        doneCount > 0
+          ? `remove "${r.title}"? your progress (${doneCount}/${total} videos completed + per-video watch positions) will be lost. you'll start from scratch if you re-add it.`
+          : `remove "${r.title}"? any saved watch positions for its videos will also be wiped.`;
     } else {
       message = `remove "${r.title}"?`;
     }
@@ -801,7 +811,8 @@ function ResourcesView({
       message,
       confirmLabel: "remove",
       onConfirm: () => {
-        if (r.videos?.length) clearWatchFor(r.videos.map((v) => v.videoId));
+        if (r.videos?.length)
+          clearWatchFor(r.videos.flatMap((v) => [`${r.id}::${v.videoId}`, v.videoId]));
         if (watchingVid?.startsWith(`${r.id}::`)) setWatchingVid(null);
         setResources((prev) => ({
           ...prev,
@@ -1086,6 +1097,7 @@ function ResourcesView({
                               {isWatching && (
                                 <EmbeddedPlayer
                                   videoId={v.videoId}
+                                  watchKey={watchKey}
                                   alreadyDone={v.done}
                                   onComplete={() => {
                                     if (!v.done) toggleVideo(r.id, v.videoId);
