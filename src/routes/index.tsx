@@ -244,6 +244,7 @@ function Home() {
   const [revisions, setRevisions] = useState<Revisions>({});
   const [active, setActive] = useState<string>("aptitude");
   const [view, setView] = useState<ViewKey>("syllabus");
+  const [isHydrated, setIsHydrated] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -254,20 +255,25 @@ function Home() {
     if (v2) setResources(v2);
     else setResources(loadJSON("gate-ae-resources-v1", {}));
     setRevisions(loadJSON(REVISE_KEY, {}));
+    setIsHydrated(true);
   }, []);
 
   useEffect(() => {
+    if (!isHydrated) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-  }, [progress]);
+  }, [progress, isHydrated]);
   useEffect(() => {
+    if (!isHydrated) return;
     localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-  }, [notes]);
+  }, [notes, isHydrated]);
   useEffect(() => {
+    if (!isHydrated) return;
     localStorage.setItem(RESOURCES_KEY, JSON.stringify(resources));
-  }, [resources]);
+  }, [resources, isHydrated]);
   useEffect(() => {
+    if (!isHydrated) return;
     localStorage.setItem(REVISE_KEY, JSON.stringify(revisions));
-  }, [revisions]);
+  }, [revisions, isHydrated]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -660,7 +666,9 @@ function EmbeddedPlayer({
       persist();
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("beforeunload", persist);
-      try { playerRef.current?.destroy?.(); } catch {}
+      try {
+        playerRef.current?.destroy?.();
+      } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId, resumeAt]);
@@ -673,10 +681,16 @@ function EmbeddedPlayer({
       <div className="mt-2 flex items-center gap-3 mono text-[10px] text-[var(--muted)] uppercase tracking-widest">
         <span>watched {Math.round(pct * 100)}%</span>
         <div className="flex-1 h-px bg-[var(--line)] relative overflow-hidden">
-          <div className="absolute inset-y-0 left-0 bg-[var(--fg)]" style={{ width: `${Math.round(pct * 100)}%` }} />
+          <div
+            className="absolute inset-y-0 left-0 bg-[var(--fg)]"
+            style={{ width: `${Math.round(pct * 100)}%` }}
+          />
         </div>
         {resumeAt > 1 && pct < 0.9 && (
-          <span>resumed @ {Math.floor(resumeAt / 60)}:{String(Math.floor(resumeAt % 60)).padStart(2, "0")}</span>
+          <span>
+            resumed @ {Math.floor(resumeAt / 60)}:
+            {String(Math.floor(resumeAt % 60)).padStart(2, "0")}
+          </span>
         )}
         <span>{completedRef.current ? "✓ done" : "auto-ticks at 90%"}</span>
       </div>
@@ -796,7 +810,6 @@ function ResourcesView({
       },
     });
   };
-
 
   const beginEdit = (resource: Resource) => {
     setEditingId(resource.id);
@@ -1153,9 +1166,9 @@ function GuideView() {
               <ul className="list-disc pl-5 space-y-1">
                 <li>
                   Each video has a <strong>watch button</strong> that opens the player directly
-                  inside the app — no leaving the page or dealing with YouTube's sidebar and distrcations from it. The{" "}
-                  <strong>external link</strong> is still available if you prefer to open it on
-                  YouTube.
+                  inside the app — no leaving the page or dealing with YouTube's sidebar and
+                  distrcations from it. The <strong>external link</strong> is still available if you
+                  prefer to open it on YouTube.
                 </li>
                 <li>
                   Watch at <strong>1x, 1.5x, or 2x speed</strong> and the app tracks how much of the
@@ -1441,7 +1454,8 @@ function ReviseView({
       <div className="section-num">revise · queue</div>
       <h1 className="serif text-5xl mt-2 mb-6 lowercase">to be revised</h1>
       <p className="text-sm text-[var(--muted)] max-w-xl mb-8 leading-relaxed">
-        track topics, problems, and assignments you need to come back to. tick them off as you revise. saves locally.
+        track topics, problems, and assignments you need to come back to. tick them off as you
+        revise. saves locally.
       </p>
 
       <div className="flex gap-2 flex-wrap mb-6">
@@ -1481,7 +1495,10 @@ function ReviseView({
             {pending.length} pending · {doneCount} revised
           </span>
           {doneCount > 0 && (
-            <button onClick={clearDone} className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest">
+            <button
+              onClick={clearDone}
+              className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest"
+            >
               clear revised
             </button>
           )}
