@@ -1401,14 +1401,6 @@ function GuideView() {
         </section>
 
         <section>
-          <h2 className="serif text-xl mb-2 lowercase">formulas</h2>
-          <p>
-            Use this section as a formula notebook. Add the formulas you want to remember for each
-            section, and keep them short and easy to scan.
-          </p>
-        </section>
-
-        <section>
           <h2 className="serif text-xl mb-2 lowercase">log</h2>
           <p>
             The log gives you an at-a-glance overview of how far along your prep is. Use it to spot
