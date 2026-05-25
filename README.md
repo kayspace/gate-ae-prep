@@ -12,6 +12,7 @@ The app is intentionally simple:
 - no backend services
 - browser-only data storage
 - YouTube playlist support via a user-provided API key
+- revision queue for items you need to revisit
 
 ## Repo contents
 
@@ -65,8 +66,8 @@ The app is built as a single-page React application with TanStack Router for rou
 ### High-level flow
 
 1. **User lands on the app** → Home component loads
-2. **Component loads state from localStorage** → progress, notes, resources, formulas, API key
-3. **Navigation tab clicked** → view state changes to new ViewKey ("syllabus" | "books" | "resources" | "formulas" | "log" | "guide")
+2. **Component loads state from localStorage** → progress, notes, resources, revise items, API key
+3. **Navigation tab clicked** → view state changes to new ViewKey ("syllabus" | "books" | "resources" | "revise" | "log" | "guide")
 4. **Corresponding view component renders** → user interacts
 5. **State updates on user input** → automatically saved to localStorage via useEffect
 
@@ -74,12 +75,12 @@ The app is built as a single-page React application with TanStack Router for rou
 
 The app is a single large component (`Home`) that manages:
 
-- state for 5 different data types (progress, notes, resources, formulas, books)
+- state for the main prep data types (progress, notes, resources, revise queue, books)
 - view routing (which tab is active)
 - section selection (active AE section)
 - shared handlers for updating each data type
 
-Each view (Syllabus, Books, Resources, Formulas, Log, Guide) is a sub-component rendered conditionally inside Home based on the current view.
+Each view (Syllabus, Books, Resources, Revise, Log, Guide) is a sub-component rendered conditionally inside Home based on the current view.
 
 ## Data storage
 
@@ -88,8 +89,9 @@ All data is stored in browser `localStorage` under these keys:
 - `gate-ae-progress-v1` — topic completion state (object with topic keys as booleans)
 - `gate-ae-notes-v1` — section notes (object with section ID as key, note text as value)
 - `gate-ae-resources-v2` — saved videos/playlists/links (nested object: section → array of resources)
-- `gate-ae-formulas-v1` — formula notes (object with section ID as key, formula text as value)
+- `gate-ae-revise-v1` — revise queue items (nested object: section → array of items)
 - `gate-ae-yt-key-v1` — YouTube Data API key (plain string)
+- `gate-ae-watch-v1` — per-video watch state and resume positions for embedded playlist videos
 
 The app uses `loadJSON()` utility to safely parse localStorage with fallback values, and syncs state back on every update via useEffect.
 
@@ -105,14 +107,16 @@ The main app file containing:
 - **SyllabusView** — topic tracking, notes, and section navigation
 - **BooksView** — PDF library display
 - **ResourcesView** — video/playlist/link manager, YouTube API integration
-- **FormulasView** — formula notes editor
+- **ReviseView** — revise queue editor for items to revisit
 - **LogView** — overall progress summary
 - **GuideView** — user guide rendered inside the app
+- **EmbeddedPlayer** — embedded YouTube player with watch progress tracking
 - **topicKey()** — generates unique keys for topic tracking
 - **detectKind()** — determines if a URL is a video, playlist, or generic link
 - **extractPlaylistId()** — extracts YouTube playlist ID from URL
 - **fetchPlaylistVideos()** — calls YouTube Data API to load playlist items
 - **loadJSON()** — safely parses JSON from localStorage with fallback
+- **loadWatch() / saveWatch()** — persist video watch state and resume positions
 
 ### `src/lib/syllabus.ts`
 
@@ -138,6 +142,7 @@ Views are managed via the `view` state variable (type `ViewKey`):
 
 - Tabs in the nav bar trigger `setView()`
 - Each view renders conditionally: `{view === "syllabus" && <SyllabusView ... />}`
+- The app includes a dedicated `revise` view for queued review items
 - Guide tab is available in the footer
 
 ## YouTube integration
@@ -150,8 +155,12 @@ The app can auto-fetch and display playlist videos via the YouTube Data API:
    - extracts the playlist ID
    - calls `fetchPlaylistVideos()` with the key
    - parses the API response and stores video metadata (ID, title, thumbnail)
-4. Each video can be marked as "done" independently
-5. Progress is reflected in a progress bar
+4. Each playlist video is shown with a watch checkbox and can be opened inside the app
+5. The embedded player is created via the YouTube IFrame API and tracks playback time
+6. Playback progress is saved using `loadWatch()` / `saveWatch()` under `gate-ae-watch-v1`
+7. Skipped playback time is ignored, and a video auto-completes only after ~90% real watching
+8. Resume state restores the last watched position when the user returns
+9. Progress is reflected in a progress bar
 
 To support this, the `Resource` type includes optional fields:
 
@@ -159,6 +168,8 @@ To support this, the `Resource` type includes optional fields:
 - `videos` — array of `PlaylistVideo` objects
 - `loading` — fetch state
 - `error` — error message if fetch fails
+
+The embedded player logic lives in `EmbeddedPlayer` and relies on saved watch state to resume playback cleanly.
 
 ## Customization
 
@@ -188,7 +199,7 @@ All TypeScript types are defined in `src/routes/index.tsx`:
 - `Notes` — Record of section ID → note text
 - `Resource` — object with id, title, url, kind, optional playlist metadata
 - `Resources` — Record of section ID → array of Resource objects
-- `Formulas` — Record of section ID → formula text
+- `Revisions` — Record of section ID → array of revise queue items
 - `PlaylistVideo` — video metadata (ID, title, thumbnail, done flag)
 - `ViewKey` — union type for active view tab
 
