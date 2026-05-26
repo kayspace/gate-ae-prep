@@ -455,7 +455,9 @@ function Home() {
       )}
 
       {view === "books" && <BooksView />}
-      {view === "resources" && <ResourcesView resources={resources} setResources={setResources} />}
+      {view === "resources" && (
+        <ResourcesView resources={resources} setResources={setResources} setView={setView} />
+      )}
       {view === "revise" && <ReviseView revisions={revisions} setRevisions={setRevisions} />}
       {view === "log" && <LogView progress={progress} resources={resources} />}
       {view === "guide" && <GuideView />}
@@ -709,9 +711,11 @@ function EmbeddedPlayer({
 function ResourcesView({
   resources,
   setResources,
+  setView,
 }: {
   resources: Resources;
   setResources: React.Dispatch<React.SetStateAction<Resources>>;
+  setView: React.Dispatch<React.SetStateAction<ViewKey>>;
 }) {
   const [active, setActive] = useState<string>("aptitude");
   const [title, setTitle] = useState("");
@@ -886,9 +890,15 @@ function ResourcesView({
       <div className="section-num">resources · videos & courses</div>
       <h1 className="serif text-5xl mt-2 mb-6 lowercase">what you're watching</h1>
       <p className="text-sm text-[var(--muted)] max-w-2xl mb-8 leading-relaxed">
-        paste any yt video, playlist, or link. playlists turn into courses — every video gets a tick
-        + progress bar. needs a free youtube data api key (one-time, saved to your browser). see
-        guide for full details.
+        ✦ paste any yt video, playlist, or link. playlists turn into courses — every video gets a
+        tick + progress bar. needs a free youtube data api key (one-time, saved to your browser).{" "}
+        <button
+          onClick={() => setView("guide")}
+          className="text-[var(--muted)] hover:text-[var(--fg)] bg-none border-none p-0 cursor-pointer inline underline"
+        >
+          see guide
+        </button>{" "}
+        for full details.
       </p>
 
       {/* yt api key */}
@@ -1176,6 +1186,10 @@ function GuideView() {
             <div>
               <h3 className="serif text-base mb-2 lowercase">watching videos</h3>
               <ul className="list-disc pl-5 space-y-1">
+                <li className="text-[var(--muted)] mb-2 font-semibold">
+                  <strong>ad-free & distraction-free</strong> — watch using the embedded player with
+                  zero ads or YouTube distractions.
+                </li>
                 <li>
                   Each video has a <strong>watch button</strong> that opens the player directly
                   inside the app — no leaving the page or dealing with YouTube's sidebar and
