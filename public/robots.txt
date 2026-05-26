@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://gate-ae-tracker.vercel.app/sitemap.xml
