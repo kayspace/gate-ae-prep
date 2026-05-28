@@ -306,6 +306,24 @@ function Home() {
   const section = syllabus.find((s) => s.id === active)!;
   const toggle = (key: string) => setProgress((prev) => ({ ...prev, [key]: !prev[key] }));
 
+  async function loadVersion() {
+    try {
+      const r = await fetch(
+        "https://api.github.com/repos/kayspace/gate-ae-prep/releases/latest",
+      );
+
+      if (!r.ok) throw new Error("Failed");
+
+      const data = await r.json();
+
+      document.getElementById("app-version").textContent = data.tag_name || "dev";
+    } catch {
+      document.getElementById("app-version").textContent = "dev";
+    }
+  }
+
+  loadVersion();
+
   return (
     <div ref={mainRef} className="min-h-screen">
       <header className="px-6 md:px-10 pt-8 pb-6 flex items-baseline justify-between">
@@ -313,8 +331,13 @@ function Home() {
           <span className="serif text-2xl">gate ae</span>
           <span className="tag">prep log · {new Date().getFullYear()}</span>
         </div>
-        <div className="mono text-xs text-[var(--muted)]">
-          {overall.done}/{overall.total} topics
+        <div className="flex items-center mono text-xs text-[var(--muted)] gap-5">
+          <div className="mono text-xs text-[var(--muted)]">
+            {overall.done}/{overall.total} topics
+          </div>
+          <span className="px-[8px] py-[2px] border" id="app-version">
+            loading...
+          </span>
         </div>
       </header>
 
