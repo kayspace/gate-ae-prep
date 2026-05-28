@@ -306,23 +306,31 @@ function Home() {
   const section = syllabus.find((s) => s.id === active)!;
   const toggle = (key: string) => setProgress((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  async function loadVersion() {
-    try {
-      const r = await fetch(
-        "https://api.github.com/repos/kayspace/gate-ae-prep/releases/latest",
-      );
+  useEffect(() => {
+    async function loadVersion() {
+      try {
+        const r = await fetch("https://api.github.com/repos/kayspace/gate-ae-prep/releases/latest");
 
-      if (!r.ok) throw new Error("Failed");
+        if (!r.ok) throw new Error("Failed");
 
-      const data = await r.json();
+        const data = await r.json();
 
-      document.getElementById("app-version").textContent = data.tag_name || "dev";
-    } catch {
-      document.getElementById("app-version").textContent = "dev";
+        const el = document.getElementById("app-version");
+
+        if (el) {
+          el.textContent = data.tag_name || "dev";
+        }
+      } catch {
+        const el = document.getElementById("app-version");
+
+        if (el) {
+          el.textContent = "dev";
+        }
+      }
     }
-  }
 
-  loadVersion();
+    loadVersion();
+  }, []);
 
   return (
     <div ref={mainRef} className="min-h-screen">
