@@ -493,11 +493,35 @@ function Home() {
       {view === "log" && <LogView progress={progress} resources={resources} />}
       {view === "guide" && <GuideView />}
 
-      <footer className="px-6 md:px-10 py-10 mt-20 border-t border-[var(--line)] flex flex-wrap gap-4 justify-between items-baseline">
-        <span className="mono text-[10px] text-[var(--faint)] tracking-widest">
+      <footer className="px-6 md:px-10 py-4  mt-20 border-t border-[var(--line)] flex flex-wrap  justify-between items-center">
+        {/* <span className="mono text-[10px] text-[var(--faint)] tracking-widest">
           local-first · saves to your browser
+        </span> */}
+        <span className="serif italic text-sm text-[var(--muted)]">
+          giving up is not an option .keep at it.
         </span>
-        <span className="serif italic text-sm text-[var(--muted)]">keep at it.</span>
+        <span className="mono text-[10px] text-[var(--faint)] tracking-widest">
+          star on{" "}
+          <a
+            href="https://github.com/kayspace/gate-ae-prep"
+            target="_blank"
+            rel="noreferrer"
+            className="link-u text-[var(--muted)] hover:text-[var(--fg)]"
+          >
+            github
+          </a>
+        </span>
+        <span className="mono text-[10px] text-[var(--faint)] tracking-widest">
+          open{" "}
+          <a
+            href="https://github.com/kayspace/gate-ae-prep/issues"
+            target="_blank"
+            rel="noreferrer"
+            className="link-u text-[var(--muted)] hover:text-[var(--fg)]"
+          >
+            issues
+          </a>
+        </span>
         <span className="mono text-[10px] text-[var(--faint)] tracking-widest">
           by{" "}
           <a
