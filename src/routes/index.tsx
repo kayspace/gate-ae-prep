@@ -514,7 +514,7 @@ function Home() {
           giving up is not an option .keep at it.
         </span>
         <span className="mono text-[10px] text-[var(--faint)] tracking-widest">
-          star on{" "}
+          support by a star on{" "}
           <a
             href="https://github.com/kayspace/gate-ae-prep"
             target="_blank"
@@ -533,7 +533,15 @@ function Home() {
             className="link-u text-[var(--muted)] hover:text-[var(--fg)]"
           >
             issues
-          </a>
+          </a>{" "} 
+          / <a 
+            href="https://github.com/kayspace/gate-ae-prep/discussions" 
+            target="_blank" 
+            rel="noreferrer"
+            className="link-u text-[var(--muted)] hover:text-[var(--fg)]"
+            >
+            discussions
+            </a>
         </span>
         <span className="mono text-[10px] text-[var(--faint)] tracking-widest">
           by{" "}
