@@ -252,6 +252,7 @@ function Home() {
   const [active, setActive] = useState<string>("aptitude");
   const [view, setView] = useState<ViewKey>("syllabus");
   const [isHydrated, setIsHydrated] = useState(false);
+  const [dark, setDark] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -332,6 +333,12 @@ function Home() {
     loadVersion();
   }, []);
 
+  const themeswitch = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle("dark", next);
+  };
+
   return (
     <div ref={mainRef} className="min-h-screen">
       <header className="px-6 md:px-10 pt-8 pb-6 flex items-baseline justify-between">
@@ -343,6 +350,12 @@ function Home() {
           <div className="mono text-xs text-[var(--muted)]">
             {overall.done}/{overall.total} topics
           </div>
+          <button
+            onClick={themeswitch}
+            className="mono text-xs text-[var(--muted)] hover:text-[var(--fg)] transition-colors duration-200 cursor-pointer px-[8px] py-[2px] border"
+          >
+            {dark ? "light" : "dark"}
+          </button>
           <span className="px-[8px] py-[2px] border" id="app-version">
             loading...
           </span>
