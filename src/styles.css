@@ -25,6 +25,15 @@
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
 }
 
+html.dark {
+  --bg: #1a1a1a;
+  --fg: #b0aaa3;
+  --muted: #6b6862;
+  --faint: #4a4744 ;
+  --line: rgba(255, 255, 255, 0.07);
+  --accent: #c9c3bb;
+}
+
 * {
   border-color: var(--line);
 }
