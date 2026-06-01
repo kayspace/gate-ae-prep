@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { gsap } from "gsap";
 
 import { syllabus } from "@/lib/syllabus";
-import { sectionStats, topicKey } from "@/lib/syllabus-utils";
+import { topicKey } from "@/lib/syllabus-utils";
 import { STORAGE_KEYS, loadJSON } from "@/lib/storage";
 import type { Notes, Progress, Resources, Revisions, ViewKey } from "@/types";
 
@@ -105,6 +105,3 @@ function Home() {
     </div>
   );
 }
-
-// re-export sectionStats reference so the helper module stays tree-shake friendly
-void sectionStats;
