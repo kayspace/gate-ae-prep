@@ -8,19 +8,23 @@ This repository contains the prep tracker app used to manage Gate AE study progr
 
 The app is intentionally simple:
 
-- React-based single-page interface
+- React-based single-page interface (TanStack Router + TanStack Start)
 - no backend services
-- browser-only data storage
+- browser-only data storage (`localStorage`)
 - YouTube playlist support via a user-provided API key
+- in-app YouTube player with watched-time tracking and resume
 
 ## Repo contents
 
 - `README.md` — this developer guide.
 - `USER_GUIDE.md` — the user-facing guide intended for first-time visitors.
-- `src/routes/index.tsx` — main app UI and view logic.
-- `src/lib/syllabus.ts` — section and topic data.
-- `src/lib/books.ts` — default book metadata.
-- `src/styles.css` — app styling and design tokens.
+- `src/routes/index.tsx` — thin route shell. Wires app state, persistence, and the active view.
+- `src/types/` — shared TypeScript types.
+- `src/lib/` — pure utilities (storage, youtube, syllabus helpers, formatting, syllabus + books data).
+- `src/data/` — static seed data (recommended resources).
+- `src/components/` — reusable UI primitives and layout chrome.
+- `src/features/` — one folder per tab/view (`syllabus`, `books`, `resources`, `revise`, `log`, `guide`).
+- `src/styles.css` — design tokens and app styling.
 - `public/books/` — section-based PDF assets.
 
 ## Development
@@ -60,148 +64,158 @@ npm run preview
 
 ## Architecture
 
-The app is built as a single-page React application with TanStack Router for routing and GSAP for entrance animations.
+The app is a single-page React application using TanStack Router for routing and GSAP for entrance
+animations. It is intentionally local-first — all state lives in `localStorage`.
+
+The codebase follows **separation of concerns**: the route file owns only top-level state and view
+selection; every tab is its own feature module; pure logic (storage, youtube API, syllabus stats)
+lives in `src/lib/`.
 
 ### High-level flow
 
-1. **User lands on the app** → Home component loads
-2. **Component loads state from localStorage** → progress, notes, resources, formulas, API key
-3. **Navigation tab clicked** → view state changes to new ViewKey ("syllabus" | "books" | "resources" | "formulas" | "log" | "guide")
-4. **Corresponding view component renders** → user interacts
-5. **State updates on user input** → automatically saved to localStorage via useEffect
+1. **User lands on `/`** → `Home` (in `src/routes/index.tsx`) mounts.
+2. **Home hydrates state** from `localStorage` via helpers in `src/lib/storage.ts`.
+3. **User clicks a nav tab** → `view` state changes (`ViewKey`).
+4. **Matching feature view renders** from `src/features/<view>/`.
+5. **User input updates state** → `useEffect` persists back to `localStorage`.
 
-### App structure
+### Directory layout
 
-The app is a single large component (`Home`) that manages:
+```
+src/
+├── routes/
+│   ├── __root.tsx              # root layout
+│   └── index.tsx               # Home: state, persistence, view switch
+├── types/
+│   └── index.ts                # Progress, Notes, Resource, Revisions, ViewKey, ...
+├── lib/
+│   ├── storage.ts              # STORAGE_KEYS, loadJSON, watch-state helpers
+│   ├── youtube.ts              # url parsing, Data API fetch, IFrame API loader
+│   ├── syllabus.ts             # syllabus data + Section type
+│   ├── syllabus-utils.ts       # topicKey, sectionStats
+│   ├── books.ts                # auto-generated PDF metadata
+│   └── format.ts               # fmtSize, etc.
+├── data/
+│   └── default-resources.ts    # recommended starter playlists
+├── components/
+│   ├── ConfirmModal.tsx        # styled confirm dialog
+│   ├── EmbeddedPlayer.tsx      # in-app yt player + watch tracking
+│   └── layout/
+│       ├── AppHeader.tsx
+│       ├── AppFooter.tsx
+│       └── ViewNav.tsx
+└── features/
+    ├── syllabus/SyllabusView.tsx
+    ├── books/BooksView.tsx
+    ├── resources/
+    │   ├── ResourcesView.tsx   # container: state + handlers
+    │   ├── ResourceItem.tsx    # single resource row + playlist drawer
+    │   └── YtApiKeyBox.tsx     # api-key editor
+    ├── revise/ReviseView.tsx
+    ├── log/LogView.tsx
+    └── guide/GuideView.tsx
+```
 
-- state for 5 different data types (progress, notes, resources, formulas, books)
-- view routing (which tab is active)
-- section selection (active AE section)
-- shared handlers for updating each data type
+### Why this shape
 
-Each view (Syllabus, Books, Resources, Formulas, Log, Guide) is a sub-component rendered conditionally inside Home based on the current view.
+- `routes/index.tsx` is a thin shell — easy to read end-to-end.
+- Each tab is isolated; adding a new tab means a new folder under `features/` + one nav entry.
+- Pure helpers in `lib/` are trivially unit-testable and free of React.
+- Types live in one place (`src/types`) so they can be imported from anywhere without cycles.
 
 ## Data storage
 
-All data is stored in browser `localStorage` under these keys:
+All data is stored in browser `localStorage`. Keys are centralized in `STORAGE_KEYS`
+(`src/lib/storage.ts`):
 
-- `gate-ae-progress-v1` — topic completion state (object with topic keys as booleans)
-- `gate-ae-notes-v1` — section notes (object with section ID as key, note text as value)
-- `gate-ae-resources-v2` — saved videos/playlists/links (nested object: section → array of resources)
-- `gate-ae-formulas-v1` — formula notes (object with section ID as key, formula text as value)
-- `gate-ae-yt-key-v1` — YouTube Data API key (plain string)
+- `gate-ae-progress-v1` — topic completion state
+- `gate-ae-notes-v1` — per-section notes
+- `gate-ae-resources-v2` — saved videos/playlists/links
+- `gate-ae-revise-v1` — per-section revision queue
+- `gate-ae-yt-key-v1` — YouTube Data API key
+- `gate-ae-watch-v1` — per-video watched seconds, last position, duration
 
-The app uses `loadJSON()` utility to safely parse localStorage with fallback values, and syncs state back on every update via useEffect.
+Use `loadJSON()` for safe parsing with a fallback. Watch-state read/write
+goes through `loadWatch()` / `saveWatch()` / `clearWatchFor()`.
 
 No server-side storage or authentication is used.
 
-## Key modules and functions
+## Key modules
 
 ### `src/routes/index.tsx`
 
-The main app file containing:
-
-- **Home** — main component, orchestrates all state and view routing
-- **SyllabusView** — topic tracking, notes, and section navigation
-- **BooksView** — PDF library display
-- **ResourcesView** — video/playlist/link manager, YouTube API integration
-- **FormulasView** — formula notes editor
-- **LogView** — overall progress summary
-- **GuideView** — user guide rendered inside the app
-- **topicKey()** — generates unique keys for topic tracking
-- **detectKind()** — determines if a URL is a video, playlist, or generic link
-- **extractPlaylistId()** — extracts YouTube playlist ID from URL
-- **fetchPlaylistVideos()** — calls YouTube Data API to load playlist items
-- **loadJSON()** — safely parses JSON from localStorage with fallback
+- Owns top-level state (`progress`, `notes`, `resources`, `revisions`, `active`, `view`).
+- Hydrates from `localStorage` on mount; persists on every change.
+- Renders the active feature view.
 
 ### `src/lib/syllabus.ts`
 
-- Defines the `Section` type: contains id, title, number, and arrays of core and special topics
-- Exports `syllabus` array — master list of all AE sections and topics
-- Edit this file to add/modify sections or topics
+- `Section` type + `syllabus` array. Edit this to change sections/topics.
 
-### `src/lib/books.ts`
+### `src/lib/syllabus-utils.ts`
 
-- Defines the `Book` type with metadata (name, file, size)
-- Exports `books` array grouped by section ID
-- Automatically populated by `npm run books` script from `public/books/`
+- `topicKey(section, topic, point)` — stable progress key.
+- `sectionStats(section, progress)` — `{ done, total, pct }`.
 
-### `src/styles.css`
+### `src/lib/youtube.ts`
 
-- CSS custom properties (design tokens) for colors, fonts, and spacing
-- Tailwind configuration
-- Animation and utility classes
+- `detectKind(url)` — classifies a URL as `video | playlist | link`.
+- `extractPlaylistId(url)` — pulls `list=...` out of a YouTube URL.
+- `fetchPlaylistVideos(playlistId, apiKey)` — paged Data API fetch.
+- `loadYouTubeAPI()` — singleton loader for the IFrame Player API.
 
-## View routing
+### `src/components/EmbeddedPlayer.tsx`
 
-Views are managed via the `view` state variable (type `ViewKey`):
+- In-app YouTube player with anti-skip watched-time tracking (deltas ≤ 2.5s).
+- Auto-saves position every ~3s, on pause, tab switch, and unmount.
+- Resumes from saved position; auto-marks done at 90% watched.
 
-- Tabs in the nav bar trigger `setView()`
-- Each view renders conditionally: `{view === "syllabus" && <SyllabusView ... />}`
-- Guide tab is available in the footer
+### `src/components/ConfirmModal.tsx`
+
+- Styled confirmation dialog used wherever a destructive action needs a prompt.
 
 ## YouTube integration
 
-The app can auto-fetch and display playlist videos via the YouTube Data API:
-
-1. User provides an API key on the Resources page
-2. Key is stored in `localStorage` under `gate-ae-yt-key-v1`
-3. When a YouTube playlist URL is added, the app:
-   - extracts the playlist ID
-   - calls `fetchPlaylistVideos()` with the key
-   - parses the API response and stores video metadata (ID, title, thumbnail)
-4. Each video can be marked as "done" independently
-5. Progress is reflected in a progress bar
-
-To support this, the `Resource` type includes optional fields:
-
-- `playlistId` — extracted from URL
-- `videos` — array of `PlaylistVideo` objects
-- `loading` — fetch state
-- `error` — error message if fetch fails
+1. User provides an API key on the Resources page (`YtApiKeyBox`).
+2. Key is stored in `localStorage` under `STORAGE_KEYS.ytKey`.
+3. When a YouTube playlist URL is added, `ResourcesView`:
+   - extracts the playlist ID via `extractPlaylistId()`
+   - fetches videos via `fetchPlaylistVideos()`
+   - merges saved `done` flags by `videoId`
+4. Each video can be marked done independently or auto-marked at 90% watched.
 
 ## Customization
 
 ### Update the syllabus
 
-Edit `src/lib/syllabus.ts` to change sections, topics, or topic labels.
+Edit `src/lib/syllabus.ts`.
 
 ### Add books and PDFs
 
-Place new PDFs into `public/books/<section>/`.
+Drop new PDFs into `public/books/<section>/`, then run `npm run books` to regenerate
+`src/lib/books.ts`.
 
-The `npm run books` script scans these folders and generates metadata.
+### Change default/recommended resources
 
-### Change default resources
-
-Edit the `DEFAULT_RESOURCES` object in `src/routes/index.tsx` to adjust built-in recommended playlists or links.
+Edit `src/data/default-resources.ts`.
 
 ### Modify styling
 
-Edit `src/styles.css` to update colors, fonts, or add new utility classes.
+Edit `src/styles.css` (design tokens live at the top).
 
-## State types
+### Add a new tab
 
-All TypeScript types are defined in `src/routes/index.tsx`:
-
-- `Progress` — Record of topic keys → boolean (completed or not)
-- `Notes` — Record of section ID → note text
-- `Resource` — object with id, title, url, kind, optional playlist metadata
-- `Resources` — Record of section ID → array of Resource objects
-- `Formulas` — Record of section ID → formula text
-- `PlaylistVideo` — video metadata (ID, title, thumbnail, done flag)
-- `ViewKey` — union type for active view tab
-
-## User guide integration
-
-The user-facing guide is available inside the app via the **guide** tab (accessed from the footer or nav). The same guide content is maintained in `USER_GUIDE.md`.
+1. Add the key to `ViewKey` in `src/types/index.ts`.
+2. Add it to the `VIEWS` array in `src/components/layout/ViewNav.tsx`.
+3. Create `src/features/<name>/<Name>View.tsx`.
+4. Render it from `src/routes/index.tsx`.
 
 ## Development workflow
 
-1. Make changes to component logic in `src/routes/index.tsx` or data in `src/lib/syllabus.ts`
-2. Test locally with `npm run dev`
-3. Update `USER_GUIDE.md` if user-facing behavior changes
-4. Commit and push
+1. Make changes in the relevant feature module or shared lib.
+2. Test locally with `npm run dev`.
+3. Update `USER_GUIDE.md` if user-facing behavior changes.
+4. Commit and push.
 
 ## License
 
