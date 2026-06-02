@@ -148,13 +148,15 @@ Paste links like:
 
 The app detects playlist links automatically.
 
-## Formulas section
+## Revise section
 
-This section is your formula notebook.
+This section is your revision queue.
 
-- Choose a section and add formulas or quick reference notes.
-- It is plain text and saved in the browser.
-- Keep notes short and easy to scan while studying.
+- Choose a section and add items you want to come back to.
+- Use it for topics, problems, derivations, or any study task that needs a second pass.
+- Tick an item when you revise it.
+- You can clear completed items when you are done reviewing them.
+- The list is saved in your browser so you can return to it later.
 
 ## Log section
 

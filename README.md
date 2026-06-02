@@ -184,6 +184,8 @@ No server-side storage or authentication is used.
    - merges saved `done` flags by `videoId`
 4. Each video can be marked done independently or auto-marked at 90% watched.
 
+The embedded player logic lives in `EmbeddedPlayer` and relies on saved watch state to resume playback cleanly.
+
 ## Customization
 
 ### Update the syllabus
