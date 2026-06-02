@@ -6,48 +6,50 @@ import { loadWatch, saveWatch } from "@/lib/storage";
 // marks done once watched ≥ 90% of duration.
 export function EmbeddedPlayer({
   videoId,
+  watchKey,
   alreadyDone,
   onComplete,
 }: {
   videoId: string;
+  watchKey: string;
   alreadyDone: boolean;
   onComplete: () => void;
 }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<any>(null);
   const tickRef = useRef<number | null>(null);
-  const watchedRef = useRef(0);
-  const lastTimeRef = useRef(0);
-  const durRef = useRef(0);
-  const saveCounterRef = useRef(0);
   const completedRef = useRef(alreadyDone);
-  const [pct, setPct] = useState(0);
-  const [resumeAt, setResumeAt] = useState(0);
 
-  // hydrate from localStorage once per videoId
-  useEffect(() => {
-    const s = loadWatch(videoId);
-    watchedRef.current = s.watched;
-    durRef.current = s.dur;
-    setResumeAt(s.pos);
-    if (s.dur > 0) setPct(Math.min(1, s.watched / s.dur));
-  }, [videoId]);
+  // read stored state ONCE synchronously at mount, never from React state
+  const initRef = useRef(() => loadWatch(watchKey, videoId));
+  const init = initRef.current();
+
+  const watchedRef = useRef(init.watched);
+  const lastTimeRef = useRef(init.pos); // seeded with saved pos, not 0
+  const durRef = useRef(init.dur);
+  const saveCounterRef = useRef(0);
+
+  const [pct, setPct] = useState(init.dur > 0 ? Math.min(1, init.watched / init.dur) : 0);
+  const resumeAt = init.pos; // plain const — no re-renders, no effect deps
 
   useEffect(() => {
     let cancelled = false;
-    let player: any = null;
 
     const persist = () => {
-      saveWatch(videoId, {
+      const livePos = playerRef.current?.getCurrentTime?.();
+      const posToSave =
+        typeof livePos === "number" && !Number.isNaN(livePos) ? livePos : lastTimeRef.current;
+      lastTimeRef.current = posToSave;
+      saveWatch(watchKey, {
         watched: watchedRef.current,
-        pos: lastTimeRef.current,
+        pos: posToSave,
         dur: durRef.current,
       });
     };
 
     loadYouTubeAPI().then((YT) => {
       if (cancelled || !hostRef.current) return;
-      player = new YT.Player(hostRef.current, {
+      const player = new YT.Player(hostRef.current, {
         videoId,
         playerVars: {
           rel: 0,
@@ -123,7 +125,7 @@ export function EmbeddedPlayer({
       } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoId, resumeAt]);
+  }, [videoId, watchKey]);
 
   return (
     <div className="mt-3">

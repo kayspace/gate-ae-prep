@@ -9,7 +9,8 @@ export function GuideView() {
           <h2 className="serif text-xl mb-2 lowercase">what this tool is</h2>
           <p>
             A study companion for Gate AE aspirants. Use it to track your syllabus progress, keep
-            PDFs organized, save resources, store formulas, and monitor your overall preparation.
+            PDFs organized, save resources, queue revision items, and monitor your overall
+            preparation.
           </p>
         </section>
 
@@ -21,7 +22,7 @@ export function GuideView() {
           </p>
           <ul className="list-disc pl-5 mt-2 space-y-1">
             <li>mark topics complete as you study</li>
-            <li>use the notes box to capture doubts or formula reminders</li>
+            <li>use the notes box to capture doubts or quick reminders</li>
             <li>section progress helps you focus where you need it most</li>
           </ul>
         </section>
@@ -55,10 +56,14 @@ export function GuideView() {
             <div>
               <h3 className="serif text-base mb-2 lowercase">watching videos</h3>
               <ul className="list-disc pl-5 space-y-1">
+                <li className="text-[var(--muted)] mb-2 font-semibold">
+                  <strong>ad-free & distraction-free</strong> — watch using the embedded player with
+                  zero ads or YouTube distractions.
+                </li>
                 <li>
                   Each video has a <strong>watch button</strong> that opens the player directly
                   inside the app — no leaving the page or dealing with YouTube's sidebar and
-                  distrcations from it. The <strong>external link</strong> is still available if you
+                  distractions from it. The <strong>external link</strong> is still available if you
                   prefer to open it on YouTube.
                 </li>
                 <li>
@@ -269,11 +274,14 @@ export function GuideView() {
         </section>
 
         <section>
-          <h2 className="serif text-xl mb-2 lowercase">formulas</h2>
-          <p>
-            Use this section as a formula notebook. Add the formulas you want to remember for each
-            section, and keep them short and easy to scan.
-          </p>
+          <h2 className="serif text-xl mb-2 lowercase">revise</h2>
+          <p>Use this section to queue items you want to revisit later.</p>
+          <ul className="list-disc pl-5 mt-2 space-y-1">
+            <li>add topics, problems, derivations, or tasks that need a second pass</li>
+            <li>tick each item as you revise it</li>
+            <li>clear completed items when review is done</li>
+            <li>your revision list is saved locally in the browser</li>
+          </ul>
         </section>
 
         <section>

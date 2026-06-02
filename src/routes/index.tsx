@@ -29,6 +29,7 @@ function Home() {
   const [revisions, setRevisions] = useState<Revisions>({});
   const [active, setActive] = useState<string>("aptitude");
   const [view, setView] = useState<ViewKey>("syllabus");
+  const [isHydrated, setIsHydrated] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
 
   // hydrate from localStorage
@@ -38,21 +39,26 @@ function Home() {
     const v2 = loadJSON<Resources | null>(STORAGE_KEYS.resources, null);
     setResources(v2 ?? loadJSON(STORAGE_KEYS.resourcesLegacy, {}));
     setRevisions(loadJSON(STORAGE_KEYS.revise, {}));
+    setIsHydrated(true);
   }, []);
 
-  // persist on change
+  // persist on change (guarded so first-paint empty state never overwrites real data)
   useEffect(() => {
+    if (!isHydrated) return;
     localStorage.setItem(STORAGE_KEYS.progress, JSON.stringify(progress));
-  }, [progress]);
+  }, [progress, isHydrated]);
   useEffect(() => {
+    if (!isHydrated) return;
     localStorage.setItem(STORAGE_KEYS.notes, JSON.stringify(notes));
-  }, [notes]);
+  }, [notes, isHydrated]);
   useEffect(() => {
+    if (!isHydrated) return;
     localStorage.setItem(STORAGE_KEYS.resources, JSON.stringify(resources));
-  }, [resources]);
+  }, [resources, isHydrated]);
   useEffect(() => {
+    if (!isHydrated) return;
     localStorage.setItem(STORAGE_KEYS.revise, JSON.stringify(revisions));
-  }, [revisions]);
+  }, [revisions, isHydrated]);
 
   // entrance animation on view/section change
   useEffect(() => {
@@ -95,7 +101,7 @@ function Home() {
       )}
       {view === "books" && <BooksView />}
       {view === "resources" && (
-        <ResourcesView resources={resources} setResources={setResources} />
+        <ResourcesView resources={resources} setResources={setResources} setView={setView} />
       )}
       {view === "revise" && <ReviseView revisions={revisions} setRevisions={setRevisions} />}
       {view === "log" && <LogView progress={progress} resources={resources} />}

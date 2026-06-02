@@ -1,11 +1,8 @@
 import { useEffect, useState } from "react";
 import { syllabus } from "@/lib/syllabus";
-import {
-  clearWatchFor,
-  STORAGE_KEYS,
-} from "@/lib/storage";
+import { clearWatchFor, STORAGE_KEYS } from "@/lib/storage";
 import { detectKind, extractPlaylistId, fetchPlaylistVideos } from "@/lib/youtube";
-import type { Resource, Resources } from "@/types";
+import type { Resource, Resources, ViewKey } from "@/types";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { YtApiKeyBox } from "./YtApiKeyBox";
 import { ResourceItem } from "./ResourceItem";
@@ -13,9 +10,11 @@ import { ResourceItem } from "./ResourceItem";
 export function ResourcesView({
   resources,
   setResources,
+  setView,
 }: {
   resources: Resources;
   setResources: React.Dispatch<React.SetStateAction<Resources>>;
+  setView: React.Dispatch<React.SetStateAction<ViewKey>>;
 }) {
   const [active, setActive] = useState<string>("aptitude");
   const [title, setTitle] = useState("");
@@ -108,7 +107,8 @@ export function ResourcesView({
       message,
       confirmLabel: "remove",
       onConfirm: () => {
-        if (r.videos?.length) clearWatchFor(r.videos.map((v) => v.videoId));
+        if (r.videos?.length)
+          clearWatchFor(r.videos.flatMap((v) => [`${r.id}::${v.videoId}`, v.videoId]));
         if (watchingVid?.startsWith(`${r.id}::`)) setWatchingVid(null);
         setResources((prev) => ({
           ...prev,
@@ -150,9 +150,15 @@ export function ResourcesView({
       <div className="section-num">resources · videos & courses</div>
       <h1 className="serif text-5xl mt-2 mb-6 lowercase">what you're watching</h1>
       <p className="text-sm text-[var(--muted)] max-w-2xl mb-8 leading-relaxed">
-        paste any yt video, playlist, or link. playlists turn into courses — every video gets a tick
-        + progress bar. needs a free youtube data api key (one-time, saved to your browser). see
-        guide for full details.
+        ✦ paste any yt video, playlist, or link. playlists turn into courses — every video gets a
+        tick + progress bar. needs a free youtube data api key (one-time, saved to your browser).{" "}
+        <button
+          onClick={() => setView("guide")}
+          className="text-[var(--muted)] hover:text-[var(--fg)] bg-none border-none p-0 cursor-pointer inline underline"
+        >
+          see guide
+        </button>{" "}
+        for full details.
       </p>
 
       <YtApiKeyBox apiKey={apiKey} onChange={saveKey} />
@@ -221,6 +227,7 @@ export function ResourcesView({
                   onRemove={() => remove(r.id)}
                   onToggleVideo={(vid) => toggleVideo(r.id, vid)}
                   onSetWatching={setWatchingVid}
+                  onSaveEdit={(patch) => updateResource(r.id, patch)}
                 />
               ))}
             </ul>
