@@ -1,5 +1,7 @@
+import { useState } from "react";
 import type { Resource } from "@/types";
 import { EmbeddedPlayer } from "@/components/EmbeddedPlayer";
+import { detectKind } from "@/lib/youtube";
 
 export function ResourceItem({
   r,
@@ -10,6 +12,7 @@ export function ResourceItem({
   onRemove,
   onToggleVideo,
   onSetWatching,
+  onSaveEdit,
 }: {
   r: Resource;
   open: boolean;
@@ -19,53 +22,109 @@ export function ResourceItem({
   onRemove: () => void;
   onToggleVideo: (vid: string) => void;
   onSetWatching: (key: string | null) => void;
+  onSaveEdit: (patch: Partial<Resource>) => void;
 }) {
   const isPlaylist = r.kind === "playlist";
   const total = r.videos?.length || 0;
   const done = r.videos?.filter((v) => v.done).length || 0;
   const pct = total ? done / total : 0;
 
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(r.title);
+  const [editUrl, setEditUrl] = useState(r.url);
+
+  const beginEdit = () => {
+    setEditTitle(r.title);
+    setEditUrl(r.url);
+    setEditing(true);
+  };
+  const cancelEdit = () => setEditing(false);
+  const saveEdit = () => {
+    const u = editUrl.trim();
+    if (!u) return;
+    onSaveEdit({
+      title: editTitle.trim() || u,
+      url: u,
+      kind: detectKind(u),
+      source: "custom",
+    });
+    setEditing(false);
+  };
+
   return (
     <li className="border border-[var(--line)] p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <a
-            href={r.url}
-            target="_blank"
-            rel="noreferrer"
-            className="serif text-lg lowercase link-u block truncate"
-          >
-            {r.title}
-          </a>
-          <div className="mono text-[10px] text-[var(--faint)] mt-1 uppercase tracking-widest">
-            {r.kind} {isPlaylist && total > 0 && `· ${done}/${total} · ${Math.round(pct * 100)}%`}
+      {editing ? (
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            placeholder="title"
+            className="w-full text-sm border-b border-[var(--line)] py-2 focus:border-[var(--fg)] transition-colors"
+          />
+          <input
+            type="text"
+            value={editUrl}
+            onChange={(e) => setEditUrl(e.target.value)}
+            placeholder="url"
+            className="w-full text-sm mono border-b border-[var(--line)] py-2 focus:border-[var(--fg)] transition-colors"
+          />
+          <div className="flex gap-2 justify-end">
+            <button onClick={cancelEdit} className="btn-ghost">
+              cancel
+            </button>
+            <button onClick={saveEdit} className="btn-ghost active">
+              save
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          {isPlaylist && (
+      ) : (
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <a
+              href={r.url}
+              target="_blank"
+              rel="noreferrer"
+              className="serif text-lg lowercase link-u block truncate"
+            >
+              {r.title}
+            </a>
+            <div className="mono text-[10px] text-[var(--faint)] mt-1 uppercase tracking-widest">
+              {r.kind} {isPlaylist && total > 0 && `· ${done}/${total} · ${Math.round(pct * 100)}%`}
+            </div>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            {isPlaylist && (
+              <button
+                onClick={onToggleOpen}
+                className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest"
+              >
+                {open ? "close" : r.videos ? "open" : "load"}
+              </button>
+            )}
+            {isPlaylist && r.videos && (
+              <button
+                onClick={onLoadPlaylist}
+                className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest"
+              >
+                refresh
+              </button>
+            )}
             <button
-              onClick={onToggleOpen}
+              onClick={beginEdit}
               className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest"
             >
-              {open ? "close" : r.videos ? "open" : "load"}
+              edit
             </button>
-          )}
-          {isPlaylist && r.videos && (
             <button
-              onClick={onLoadPlaylist}
+              onClick={onRemove}
               className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest"
             >
-              refresh
+              remove
             </button>
-          )}
-          <button
-            onClick={onRemove}
-            className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest"
-          >
-            remove
-          </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {isPlaylist && total > 0 && (
         <div className="mt-3 bar">
@@ -132,6 +191,7 @@ export function ResourceItem({
                 {isWatching && (
                   <EmbeddedPlayer
                     videoId={v.videoId}
+                    watchKey={watchKey}
                     alreadyDone={v.done}
                     onComplete={() => {
                       if (!v.done) onToggleVideo(v.videoId);
