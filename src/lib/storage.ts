@@ -22,30 +22,40 @@ export function loadJSON<T>(key: string, fallback: T): T {
 
 const EMPTY_WATCH: WatchState = { watched: 0, pos: 0, dur: 0 };
 
-export function loadWatch(videoId: string): WatchState {
+// Reads watch state for `key`. If absent but a `fallbackKey` exists (legacy
+// videoId-only entries from before per-playlist scoping), it migrates the
+// fallback into `key` and returns it.
+export function loadWatch(key: string, fallbackKey?: string): WatchState {
   if (typeof window === "undefined") return EMPTY_WATCH;
   try {
     const all = JSON.parse(localStorage.getItem(STORAGE_KEYS.watch) || "{}") as WatchMap;
-    return all[videoId] || EMPTY_WATCH;
+    if (all[key]) return all[key];
+    if (fallbackKey && all[fallbackKey]) {
+      const fallback = all[fallbackKey];
+      all[key] = fallback;
+      localStorage.setItem(STORAGE_KEYS.watch, JSON.stringify(all));
+      return fallback;
+    }
+    return EMPTY_WATCH;
   } catch {
     return EMPTY_WATCH;
   }
 }
 
-export function saveWatch(videoId: string, s: WatchState) {
+export function saveWatch(key: string, s: WatchState) {
   if (typeof window === "undefined") return;
   try {
     const all = JSON.parse(localStorage.getItem(STORAGE_KEYS.watch) || "{}") as WatchMap;
-    all[videoId] = s;
+    all[key] = s;
     localStorage.setItem(STORAGE_KEYS.watch, JSON.stringify(all));
   } catch {}
 }
 
-export function clearWatchFor(videoIds: string[]) {
-  if (typeof window === "undefined" || videoIds.length === 0) return;
+export function clearWatchFor(keys: string[]) {
+  if (typeof window === "undefined" || keys.length === 0) return;
   try {
     const all = JSON.parse(localStorage.getItem(STORAGE_KEYS.watch) || "{}") as WatchMap;
-    for (const id of videoIds) delete all[id];
+    for (const id of keys) delete all[id];
     localStorage.setItem(STORAGE_KEYS.watch, JSON.stringify(all));
   } catch {}
 }
