@@ -10,6 +10,7 @@ import type { Notes, Progress, Resources, Revisions, ViewKey } from "@/types";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { AppFooter } from "@/components/layout/AppFooter";
 import { ViewNav } from "@/components/layout/ViewNav";
+import { BackToTop } from "@/components/BackToTop";
 
 import { SyllabusView } from "@/features/syllabus/SyllabusView";
 import { BooksView } from "@/features/books/BooksView";
