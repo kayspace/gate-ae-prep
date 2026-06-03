@@ -11,8 +11,11 @@ The app is intentionally simple:
 - React-based single-page interface (TanStack Router + TanStack Start)
 - no backend services
 - browser-only data storage (`localStorage`)
-- YouTube playlist support via a user-provided API key
-- in-app YouTube player with watched-time tracking and resume
+- YouTube playlist **and single-video** support via a user-provided API key
+- in-app YouTube player with watched-time tracking and resume (for both playlists and single videos)
+- light/dark theme toggle that persists across refresh
+- floating back-to-top button for long pages
+- desktop-only experience (mobile viewports see a friendly block screen)
 
 ## Repo contents
 
