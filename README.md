@@ -138,7 +138,8 @@ All data is stored in browser `localStorage`. Keys are centralized in `STORAGE_K
 - `gate-ae-resources-v2` — saved videos/playlists/links
 - `gate-ae-revise-v1` — per-section revision queue
 - `gate-ae-yt-key-v1` — YouTube Data API key
-- `gate-ae-watch-v1` — per-video watched seconds, last position, duration
+- `gate-ae-watch-v1` — per-video watched seconds, last position, duration (keyed by `resourceId::videoId`)
+- `gate-ae-theme-v1` — user-selected theme (`light` / `dark`), falls back to system preference
 
 Use `loadJSON()` for safe parsing with a fallback. Watch-state read/write
 goes through `loadWatch()` / `saveWatch()` / `clearWatchFor()`.
