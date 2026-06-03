@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { syllabus } from "@/lib/syllabus";
 import { clearWatchFor, STORAGE_KEYS } from "@/lib/storage";
-import { detectKind, extractPlaylistId, fetchPlaylistVideos } from "@/lib/youtube";
+import { detectKind, extractPlaylistId, extractVideoId, fetchPlaylistVideos } from "@/lib/youtube";
 import type { Resource, Resources, ViewKey } from "@/types";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { YtApiKeyBox } from "./YtApiKeyBox";
