@@ -109,6 +109,10 @@ export function ResourcesView({
       onConfirm: () => {
         if (r.videos?.length)
           clearWatchFor(r.videos.flatMap((v) => [`${r.id}::${v.videoId}`, v.videoId]));
+        if (r.kind === "video") {
+          const vid = extractVideoId(r.url);
+          if (vid) clearWatchFor([`${r.id}::${vid}`, vid]);
+        }
         if (watchingVid?.startsWith(`${r.id}::`)) setWatchingVid(null);
         setResources((prev) => ({
           ...prev,
