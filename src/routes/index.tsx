@@ -85,38 +85,6 @@ function Home() {
 
   const toggle = (key: string) => setProgress((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  useEffect(() => {
-    async function loadVersion() {
-      try {
-        const r = await fetch("https://api.github.com/repos/kayspace/gate-ae-prep/releases/latest");
-
-        if (!r.ok) throw new Error("Failed");
-
-        const data = await r.json();
-
-        const el = document.getElementById("app-version");
-
-        if (el) {
-          el.textContent = data.tag_name || "dev";
-        }
-      } catch {
-        const el = document.getElementById("app-version");
-
-        if (el) {
-          el.textContent = "dev";
-        }
-      }
-    }
-
-    loadVersion();
-  }, []);
-
-  const themeswitch = () => {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
-  };
-
   return (
     <div ref={mainRef} className="min-h-screen">
       <AppHeader done={overall.done} total={overall.total} pct={overall.pct} />
