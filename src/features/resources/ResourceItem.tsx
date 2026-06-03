@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Resource } from "@/types";
 import { EmbeddedPlayer } from "@/components/EmbeddedPlayer";
-import { detectKind } from "@/lib/youtube";
+import { detectKind, extractVideoId } from "@/lib/youtube";
 
 export function ResourceItem({
   r,
@@ -25,6 +25,10 @@ export function ResourceItem({
   onSaveEdit: (patch: Partial<Resource>) => void;
 }) {
   const isPlaylist = r.kind === "playlist";
+  const isVideo = r.kind === "video";
+  const singleVideoId = isVideo ? extractVideoId(r.url) : null;
+  const singleWatchKey = singleVideoId ? `${r.id}::${singleVideoId}` : "";
+  const singleIsWatching = !!singleVideoId && watchingVid === singleWatchKey;
   const total = r.videos?.length || 0;
   const done = r.videos?.filter((v) => v.done).length || 0;
   const pct = total ? done / total : 0;
@@ -110,6 +114,14 @@ export function ResourceItem({
                 refresh
               </button>
             )}
+            {isVideo && singleVideoId && (
+              <button
+                onClick={() => onSetWatching(singleIsWatching ? null : singleWatchKey)}
+                className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest"
+              >
+                {singleIsWatching ? "close" : "watch"}
+              </button>
+            )}
             <button
               onClick={beginEdit}
               className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest"
@@ -125,6 +137,16 @@ export function ResourceItem({
           </div>
         </div>
       )}
+
+      {isVideo && singleIsWatching && singleVideoId && (
+        <EmbeddedPlayer
+          videoId={singleVideoId}
+          watchKey={singleWatchKey}
+          alreadyDone={false}
+          onComplete={() => {}}
+        />
+      )}
+
 
       {isPlaylist && total > 0 && (
         <div className="mt-3 bar">

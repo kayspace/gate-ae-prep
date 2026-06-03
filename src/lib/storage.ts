@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   revise: "gate-ae-revise-v1",
   ytKey: "gate-ae-yt-key-v1",
   watch: "gate-ae-watch-v1",
+  theme: "gate-ae-theme-v1",
 } as const;
 
 export function loadJSON<T>(key: string, fallback: T): T {

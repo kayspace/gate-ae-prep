@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { syllabus } from "@/lib/syllabus";
 import { clearWatchFor, STORAGE_KEYS } from "@/lib/storage";
-import { detectKind, extractPlaylistId, fetchPlaylistVideos } from "@/lib/youtube";
+import { detectKind, extractPlaylistId, extractVideoId, fetchPlaylistVideos } from "@/lib/youtube";
 import type { Resource, Resources, ViewKey } from "@/types";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { YtApiKeyBox } from "./YtApiKeyBox";
@@ -109,6 +109,10 @@ export function ResourcesView({
       onConfirm: () => {
         if (r.videos?.length)
           clearWatchFor(r.videos.flatMap((v) => [`${r.id}::${v.videoId}`, v.videoId]));
+        if (r.kind === "video") {
+          const vid = extractVideoId(r.url);
+          if (vid) clearWatchFor([`${r.id}::${vid}`, vid]);
+        }
         if (watchingVid?.startsWith(`${r.id}::`)) setWatchingVid(null);
         setResources((prev) => ({
           ...prev,

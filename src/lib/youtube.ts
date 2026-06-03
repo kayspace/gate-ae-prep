@@ -12,6 +12,19 @@ export function extractPlaylistId(url: string): string | null {
   return m ? m[1] : null;
 }
 
+export function extractVideoId(url: string): string | null {
+  // youtu.be/<id>
+  let m = url.match(/youtu\.be\/([a-zA-Z0-9_-]{6,})/);
+  if (m) return m[1];
+  // youtube.com/watch?v=<id>
+  m = url.match(/[?&]v=([a-zA-Z0-9_-]{6,})/);
+  if (m) return m[1];
+  // youtube.com/embed/<id> or /shorts/<id>
+  m = url.match(/youtube\.com\/(?:embed|shorts)\/([a-zA-Z0-9_-]{6,})/);
+  if (m) return m[1];
+  return null;
+}
+
 export async function fetchPlaylistVideos(
   playlistId: string,
   apiKey: string,
