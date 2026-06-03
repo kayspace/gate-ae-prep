@@ -138,6 +138,16 @@ export function ResourceItem({
         </div>
       )}
 
+      {isVideo && singleIsWatching && singleVideoId && (
+        <EmbeddedPlayer
+          videoId={singleVideoId}
+          watchKey={singleWatchKey}
+          alreadyDone={false}
+          onComplete={() => {}}
+        />
+      )}
+
+
       {isPlaylist && total > 0 && (
         <div className="mt-3 bar">
           <i style={{ transform: `scaleX(${pct})` }} />
