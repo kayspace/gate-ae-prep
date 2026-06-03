@@ -109,6 +109,7 @@ function Home() {
       {view === "guide" && <GuideView />}
 
       <AppFooter />
+      <BackToTop />
     </div>
   );
 }
