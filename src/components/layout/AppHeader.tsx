@@ -1,8 +1,20 @@
 import { useEffect, useState } from "react";
+import { STORAGE_KEYS } from "@/lib/storage";
 
 export function AppHeader({ done, total, pct }: { done: number; total: number; pct: number }) {
   const [dark, setDark] = useState(false);
   const [version, setVersion] = useState("loading...");
+
+  // hydrate theme from localStorage (fall back to system preference)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem(STORAGE_KEYS.theme);
+    const prefersDark =
+      stored == null && window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+    const initial = stored ? stored === "dark" : !!prefersDark;
+    setDark(initial);
+    document.documentElement.classList.toggle("dark", initial);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,6 +35,9 @@ export function AppHeader({ done, total, pct }: { done: number; total: number; p
     const next = !dark;
     setDark(next);
     document.documentElement.classList.toggle("dark", next);
+    try {
+      localStorage.setItem(STORAGE_KEYS.theme, next ? "dark" : "light");
+    } catch {}
   };
 
   return (
