@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Resource } from "@/types";
 import { EmbeddedPlayer } from "@/components/EmbeddedPlayer";
-import { detectKind } from "@/lib/youtube";
+import { detectKind, extractVideoId } from "@/lib/youtube";
 
 export function ResourceItem({
   r,
