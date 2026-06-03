@@ -103,8 +103,10 @@ src/
 ├── components/
 │   ├── ConfirmModal.tsx        # styled confirm dialog
 │   ├── EmbeddedPlayer.tsx      # in-app yt player + watch tracking
+│   ├── BackToTop.tsx           # floating scroll-to-top button
+│   ├── MobileBlock.tsx         # desktop-only overlay for small viewports
 │   └── layout/
-│       ├── AppHeader.tsx
+│       ├── AppHeader.tsx       # title, progress, theme toggle, version
 │       ├── AppFooter.tsx
 │       └── ViewNav.tsx
 └── features/
