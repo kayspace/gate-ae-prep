@@ -25,6 +25,10 @@ export function ResourceItem({
   onSaveEdit: (patch: Partial<Resource>) => void;
 }) {
   const isPlaylist = r.kind === "playlist";
+  const isVideo = r.kind === "video";
+  const singleVideoId = isVideo ? extractVideoId(r.url) : null;
+  const singleWatchKey = singleVideoId ? `${r.id}::${singleVideoId}` : "";
+  const singleIsWatching = !!singleVideoId && watchingVid === singleWatchKey;
   const total = r.videos?.length || 0;
   const done = r.videos?.filter((v) => v.done).length || 0;
   const pct = total ? done / total : 0;
