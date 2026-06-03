@@ -114,6 +114,14 @@ export function ResourceItem({
                 refresh
               </button>
             )}
+            {isVideo && singleVideoId && (
+              <button
+                onClick={() => onSetWatching(singleIsWatching ? null : singleWatchKey)}
+                className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest"
+              >
+                {singleIsWatching ? "close" : "watch"}
+              </button>
+            )}
             <button
               onClick={beginEdit}
               className="mono text-[10px] text-[var(--muted)] hover:text-[var(--fg)] uppercase tracking-widest"
