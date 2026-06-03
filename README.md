@@ -11,8 +11,11 @@ The app is intentionally simple:
 - React-based single-page interface (TanStack Router + TanStack Start)
 - no backend services
 - browser-only data storage (`localStorage`)
-- YouTube playlist support via a user-provided API key
-- in-app YouTube player with watched-time tracking and resume
+- YouTube playlist **and single-video** support via a user-provided API key
+- in-app YouTube player with watched-time tracking and resume (for both playlists and single videos)
+- light/dark theme toggle that persists across refresh
+- floating back-to-top button for long pages
+- desktop-only experience (mobile viewports see a friendly block screen)
 
 ## Repo contents
 
@@ -100,8 +103,10 @@ src/
 ├── components/
 │   ├── ConfirmModal.tsx        # styled confirm dialog
 │   ├── EmbeddedPlayer.tsx      # in-app yt player + watch tracking
+│   ├── BackToTop.tsx           # floating scroll-to-top button
+│   ├── MobileBlock.tsx         # desktop-only overlay for small viewports
 │   └── layout/
-│       ├── AppHeader.tsx
+│       ├── AppHeader.tsx       # title, progress, theme toggle, version
 │       ├── AppFooter.tsx
 │       └── ViewNav.tsx
 └── features/
@@ -133,7 +138,8 @@ All data is stored in browser `localStorage`. Keys are centralized in `STORAGE_K
 - `gate-ae-resources-v2` — saved videos/playlists/links
 - `gate-ae-revise-v1` — per-section revision queue
 - `gate-ae-yt-key-v1` — YouTube Data API key
-- `gate-ae-watch-v1` — per-video watched seconds, last position, duration
+- `gate-ae-watch-v1` — per-video watched seconds, last position, duration (keyed by `resourceId::videoId`)
+- `gate-ae-theme-v1` — user-selected theme (`light` / `dark`), falls back to system preference
 
 Use `loadJSON()` for safe parsing with a fallback. Watch-state read/write
 goes through `loadWatch()` / `saveWatch()` / `clearWatchFor()`.
