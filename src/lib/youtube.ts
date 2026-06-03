@@ -2,6 +2,9 @@
 import type { PlaylistVideo, Resource } from "@/types";
 
 export function detectKind(url: string): Resource["kind"] {
+  // a single video url with both v= and list= should still be treated as a video
+  const hasVideo = /youtu\.be\/|[?&]v=|youtube\.com\/(?:embed|shorts)\//.test(url);
+  if (hasVideo) return "video";
   if (/youtube\.com\/playlist|[?&]list=/.test(url)) return "playlist";
   if (/youtube\.com|youtu\.be/.test(url)) return "video";
   return "link";

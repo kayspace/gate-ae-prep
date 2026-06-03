@@ -11,6 +11,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { AppFooter } from "@/components/layout/AppFooter";
 import { ViewNav } from "@/components/layout/ViewNav";
 import { BackToTop } from "@/components/BackToTop";
+import { MobileBlock } from "@/components/MobileBlock";
 
 import { SyllabusView } from "@/features/syllabus/SyllabusView";
 import { BooksView } from "@/features/books/BooksView";
@@ -110,6 +111,7 @@ function Home() {
 
       <AppFooter />
       <BackToTop />
+      <MobileBlock />
     </div>
   );
 }
