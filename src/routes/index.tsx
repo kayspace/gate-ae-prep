@@ -111,6 +111,7 @@ function Home() {
 
       <AppFooter />
       <BackToTop />
+      <MobileBlock />
     </div>
   );
 }
