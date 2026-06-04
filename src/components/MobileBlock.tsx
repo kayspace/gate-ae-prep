@@ -21,10 +21,9 @@ export function MobileBlock() {
         · desktop only ·
       </div>
       <h1 className="serif text-4xl lowercase mb-4 leading-tight">
-        this study log lives on bigger screens.
+        this gate ae log tracker lives on bigger screens.
       </h1>
       <p className="text-sm text-[var(--muted)] max-w-md leading-relaxed mb-8">
-        the syllabus tracker, embedded courses and revision tabs need real estate to feel right.
         please open this on a laptop or desktop for the intended experience.
       </p>
       <div className="mono text-[10px] uppercase tracking-widest text-[var(--faint)] border-t border-[var(--line)] pt-4">
