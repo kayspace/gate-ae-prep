@@ -19,6 +19,7 @@ import { ResourcesView } from "@/features/resources/ResourcesView";
 import { ReviseView } from "@/features/revise/ReviseView";
 import { LogView } from "@/features/log/LogView";
 import { GuideView } from "@/features/guide/GuideView";
+import { TourOverlay } from "@/features/tour/TourOverlay";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -32,6 +33,7 @@ function Home() {
   const [active, setActive] = useState<string>("aptitude");
   const [view, setView] = useState<ViewKey>("syllabus");
   const [isHydrated, setIsHydrated] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
 
   // hydrate from localStorage
@@ -43,6 +45,20 @@ function Home() {
     setRevisions(loadJSON(STORAGE_KEYS.revise, {}));
     setIsHydrated(true);
   }, []);
+
+  // first-visit tour auto-start
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (typeof window === "undefined") return;
+    if (window.innerWidth < 1024) return; // mobile is blocked anyway
+    try {
+      const done = localStorage.getItem(STORAGE_KEYS.tourDone);
+      if (!done) {
+        const t = setTimeout(() => setTourOpen(true), 700);
+        return () => clearTimeout(t);
+      }
+    } catch {}
+  }, [isHydrated]);
 
   // persist on change (guarded so first-paint empty state never overwrites real data)
   useEffect(() => {
@@ -88,7 +104,12 @@ function Home() {
 
   return (
     <div ref={mainRef} className="min-h-screen">
-      <AppHeader done={overall.done} total={overall.total} pct={overall.pct} />
+      <AppHeader
+        done={overall.done}
+        total={overall.total}
+        pct={overall.pct}
+        onStartTour={() => setTourOpen(true)}
+      />
       <ViewNav view={view} onChange={setView} />
 
       {view === "syllabus" && (
@@ -112,6 +133,12 @@ function Home() {
       <AppFooter />
       <BackToTop />
       <MobileBlock />
+      <TourOverlay
+        open={tourOpen}
+        onClose={() => setTourOpen(false)}
+        currentView={view}
+        setView={setView}
+      />
     </div>
   );
 }

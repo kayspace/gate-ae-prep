@@ -119,7 +119,7 @@ export function GuideView() {
           </div>
         </section>
 
-        <section>
+        <section data-tour="guide-yt-section" id="guide-yt-section">
           <h2 className="serif text-xl mb-2 lowercase">youtube data api key</h2>
           <p>
             Playlist loading requires a YouTube Data API key. This key allows the app to fetch video
