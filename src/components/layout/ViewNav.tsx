@@ -10,7 +10,7 @@ export function ViewNav({
   onChange: (v: ViewKey) => void;
 }) {
   return (
-    <nav className="px-6 md:px-10 pt-6 pb-8 flex gap-2 flex-wrap">
+    <nav className="px-6 md:px-10 pt-6 pb-8 flex gap-2 flex-wrap" data-tour="nav">
       {VIEWS.map((v) => (
         <button
           key={v}

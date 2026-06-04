@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { STORAGE_KEYS } from "@/lib/storage";
 
-export function AppHeader({ done, total, pct }: { done: number; total: number; pct: number }) {
+export function AppHeader({
+  done,
+  total,
+  pct,
+  onStartTour,
+}: {
+  done: number;
+  total: number;
+  pct: number;
+  onStartTour: () => void;
+}) {
   const [dark, setDark] = useState(false);
   const [version, setVersion] = useState("loading...");
 
@@ -52,6 +62,15 @@ export function AppHeader({ done, total, pct }: { done: number; total: number; p
             {done}/{total} topics
           </div>
           <button
+            data-tour="tour-btn"
+            onClick={onStartTour}
+            className="mono text-xs text-[var(--muted)] hover:text-[var(--fg)] transition-colors duration-200 cursor-pointer px-[8px] py-[2px] border"
+            title="replay the tour"
+          >
+            tour
+          </button>
+          <button
+            data-tour="theme"
             onClick={themeswitch}
             className="mono text-xs text-[var(--muted)] hover:text-[var(--fg)] transition-colors duration-200 cursor-pointer px-[8px] py-[2px] border"
           >
@@ -60,7 +79,7 @@ export function AppHeader({ done, total, pct }: { done: number; total: number; p
           <span className="px-[8px] py-[2px] border">{version}</span>
         </div>
       </header>
-      <div className="px-6 md:px-10">
+      <div className="px-6 md:px-10" data-tour="progress">
         <div className="bar">
           <i style={{ transform: `scaleX(${pct})` }} />
         </div>
