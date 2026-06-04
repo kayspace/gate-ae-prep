@@ -2,6 +2,9 @@
 import type { PlaylistVideo, Resource } from "@/types";
 
 export function detectKind(url: string): Resource["kind"] {
+  // a single video url with both v= and list= should still be treated as a video
+  const hasVideo = /youtu\.be\/|[?&]v=|youtube\.com\/(?:embed|shorts|live)\//.test(url);
+  if (hasVideo) return "video";
   if (/youtube\.com\/playlist|[?&]list=/.test(url)) return "playlist";
   if (/youtube\.com|youtu\.be/.test(url)) return "video";
   return "link";
@@ -19,8 +22,8 @@ export function extractVideoId(url: string): string | null {
   // youtube.com/watch?v=<id>
   m = url.match(/[?&]v=([a-zA-Z0-9_-]{6,})/);
   if (m) return m[1];
-  // youtube.com/embed/<id> or /shorts/<id>
-  m = url.match(/youtube\.com\/(?:embed|shorts)\/([a-zA-Z0-9_-]{6,})/);
+  // youtube.com/embed/<id> or /shorts/<id> or /live/<id>
+  m = url.match(/youtube\.com\/(?:embed|shorts|live)\/([a-zA-Z0-9_-]{6,})/);
   if (m) return m[1];
   return null;
 }
