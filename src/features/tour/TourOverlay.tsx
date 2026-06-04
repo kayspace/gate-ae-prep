@@ -143,7 +143,8 @@ export function TourOverlay({
 
   // tooltip placement: prefer below the spotlight; flip above if no room.
   // when no rect, center it.
-  const TIP_W = 360;
+  // after
+  const TIP_W = 320;
   const TIP_H_EST = 220;
   let tipStyle: React.CSSProperties;
   if (!rect) {
@@ -156,10 +157,19 @@ export function TourOverlay({
   } else {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const spaceBelow = vh - rect.bottom;
-    const placeBelow = spaceBelow > TIP_H_EST + 24;
-    const top = placeBelow ? rect.bottom + 20 : Math.max(20, rect.top - TIP_H_EST - 20);
-    const left = Math.min(Math.max(20, rect.left), vw - TIP_W - 20);
+    const top =
+      step === 5 // step 6: above
+        ? rect.top - TIP_H_EST - 20
+        : step === 6 // step 7: middle
+          ? rect.top + rect.height / 2 - TIP_H_EST / 2
+          : rect.bottom + 130; // steps 2,3,4,5 (index 1,2,3,4): below
+    const midpoint = vw / 2;
+    const targetCenter = rect.left + rect.width / 2;
+    const preferLeft =
+      targetCenter > midpoint
+        ? Math.max(20, rect.right - TIP_W) // target in right half: right-align tooltip to target
+        : rect.left + rect.width / 2 - TIP_W / 2; // target in left half: center under target
+    const left = Math.min(Math.max(20, preferLeft), vw - TIP_W - 20);
     tipStyle = { left, top, width: TIP_W };
   }
 
@@ -196,7 +206,11 @@ export function TourOverlay({
       <div
         ref={tooltipRef}
         className="absolute bg-[var(--bg)] border border-[var(--fg)] p-5 shadow-lg"
-        style={{ ...tipStyle, pointerEvents: "auto" }}
+        style={{
+          ...tipStyle,
+          pointerEvents: "auto",
+          transform: rect ? "none" : "translate(-50%, -50%)",
+        }}
       >
         <div className="flex items-baseline justify-between mb-3">
           <span className="tag">tour</span>
