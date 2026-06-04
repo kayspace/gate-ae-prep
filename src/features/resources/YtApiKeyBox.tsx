@@ -9,7 +9,7 @@ export function YtApiKeyBox({
 }) {
   const [showKey, setShowKey] = useState(false);
   return (
-    <div className="mb-10 border border-[var(--line)] p-4 max-w-2xl">
+    <div data-tour="yt-key" className="mb-10 border border-[var(--line)] p-4 max-w-2xl">
       <div className="flex items-baseline justify-between mb-2">
         <span className="tag">yt data api key {apiKey ? "· set" : "· not set"}</span>
         <button
