@@ -101,7 +101,7 @@ export function FeedbackView() {
       </p>
 
       {status === "sent" ? (
-        <div className="max-w-xl border border-[var(--line)] p-8 fade-in">
+        <div className="max-w-xl border border-[var(--line)] p-8">
           <div className="serif text-2xl mb-2 lowercase">thank you</div>
           <p className="text-sm text-[var(--muted)] leading-relaxed mb-6">
             your feedback landed. it genuinely matters. expect quiet
