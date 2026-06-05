@@ -57,17 +57,16 @@ export function FeedbackView() {
         }),
       });
 
-      console.log("status", response.status);
+    //  console.log("status", response.status);
 
-      const text = await response.text();
+     const res = await response.json();
 
-      console.log("response text", text);
+    //  console.log("response", res);
 
-      if (!response.ok) {
-        throw new Error(`Request failed: ${response.status}`);
-      }
+     if (!response.ok) {
+       throw new Error(res.error || `Request failed: ${response.status}`);
+     }
 
-      const res = await response.json();
       if (res.ok) {
         setStatus("sent");
         setMessage("");
