@@ -1,6 +1,6 @@
 import type { ViewKey } from "@/types";
 
-const VIEWS: ViewKey[] = ["syllabus", "books", "resources", "revise", "log", "guide"];
+const VIEWS: ViewKey[] = ["syllabus", "books", "resources", "revise", "log", "guide", "feedback"];
 
 export function ViewNav({
   view,

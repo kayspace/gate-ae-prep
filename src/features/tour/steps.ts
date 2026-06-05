@@ -34,8 +34,8 @@ export const tourSteps: TourStep[] = [
   },
   {
     selector: "nav",
-    title: "six views",
-    body: "syllabus, books, resources, revise, log, guide. click any tab to switch. each one has a distinct job.",
+    title: "seven views",
+    body: "syllabus, books, resources, revise, log, guide, feedback. click any tab to switch. each one has a distinct job.",
   },
   {
     selector: "yt-key",
@@ -49,6 +49,12 @@ export const tourSteps: TourStep[] = [
     scrollIntoView: true,
     title: "full setup steps",
     body: "step-by-step instructions to create that api key live right here in the guide. come back anytime.",
+  },
+  {
+    selector: "nav",
+    view: "feedback",
+    title: "tell me what you think",
+    body: "the feedback tab feeds straight into my notion. bugs, praise, ideas — it's how this app keeps improving. drop a note anytime.",
   },
   {
     title: "you're set",
