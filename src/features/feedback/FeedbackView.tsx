@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import { submitFeedback, CATEGORIES } from "@/lib/feedback.functions";
+import { CATEGORIES } from "@/lib/feedback.constants";
 import { STORAGE_KEYS } from "@/lib/storage";
 
 const COOLDOWN_MS = 30_000;
 
 export function FeedbackView() {
-  const submit = useServerFn(submitFeedback);
-
+ 
   const [nickname, setNickname] = useState("");
   const [category, setCategory] =
     useState<(typeof CATEGORIES)[number]>("General");
@@ -47,13 +45,29 @@ export function FeedbackView() {
     setStatus("sending");
     setErrMsg("");
     try {
-      const res = await submit({
-        data: {
+      const response = await fetch("/api/feedback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           nickname: nickname.trim(),
           category,
           message: message.trim(),
-        },
+        }),
       });
+
+      console.log("status", response.status);
+
+      const text = await response.text();
+
+      console.log("response text", text);
+
+      if (!response.ok) {
+        throw new Error(`Request failed: ${response.status}`);
+      }
+
+      const res = await response.json();
       if (res.ok) {
         setStatus("sent");
         setMessage("");
