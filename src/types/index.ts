@@ -34,4 +34,11 @@ export type Revisions = Record<string, ReviseItem[]>;
 export type WatchState = { watched: number; pos: number; dur: number };
 export type WatchMap = Record<string, WatchState>;
 
-export type ViewKey = "syllabus" | "books" | "resources" | "revise" | "log" | "guide";
+export type ViewKey =
+  | "syllabus"
+  | "books"
+  | "resources"
+  | "revise"
+  | "log"
+  | "guide"
+  | "feedback";

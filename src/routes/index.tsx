@@ -19,6 +19,7 @@ import { ResourcesView } from "@/features/resources/ResourcesView";
 import { ReviseView } from "@/features/revise/ReviseView";
 import { LogView } from "@/features/log/LogView";
 import { GuideView } from "@/features/guide/GuideView";
+import { FeedbackView } from "@/features/feedback/FeedbackView";
 import { TourOverlay } from "@/features/tour/TourOverlay";
 
 export const Route = createFileRoute("/")({
@@ -129,6 +130,7 @@ function Home() {
       {view === "revise" && <ReviseView revisions={revisions} setRevisions={setRevisions} />}
       {view === "log" && <LogView progress={progress} resources={resources} />}
       {view === "guide" && <GuideView />}
+      {view === "feedback" && <FeedbackView />}
 
       <AppFooter />
       <BackToTop />
