@@ -49,9 +49,7 @@ export async function fetchPlaylistVideos(
         videoId: vid,
         title: item.snippet?.title || vid,
         thumb:
-          item.snippet?.thumbnails?.medium?.url ||
-          item.snippet?.thumbnails?.default?.url ||
-          "",
+          item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "",
         done: false,
       });
     }

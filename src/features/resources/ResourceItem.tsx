@@ -147,7 +147,6 @@ export function ResourceItem({
         />
       )}
 
-
       {isPlaylist && total > 0 && (
         <div className="mt-3 bar">
           <i style={{ transform: `scaleX(${pct})` }} />

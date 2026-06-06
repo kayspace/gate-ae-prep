@@ -29,7 +29,7 @@ html.dark {
   --bg: #1a1a1a;
   --fg: #b0aaa3;
   --muted: #6b6862;
-  --faint: #4a4744 ;
+  --faint: #4a4744;
   --line: rgba(255, 255, 255, 0.07);
   --accent: #c9c3bb;
 }
@@ -38,7 +38,8 @@ html.dark {
   border-color: var(--line);
 }
 
-html, body {
+html,
+body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
@@ -51,53 +52,79 @@ html, body {
   color: var(--bg);
 }
 
-.serif { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.01em; }
-.mono { font-family: var(--font-mono); }
+.serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.mono {
+  font-family: var(--font-mono);
+}
 
-.hairline { border-top: 1px solid var(--line); }
-.vline { border-left: 1px solid var(--line); }
+.hairline {
+  border-top: 1px solid var(--line);
+}
+.vline {
+  border-left: 1px solid var(--line);
+}
 
 .dot {
-  width: 6px; height: 6px; border-radius: 999px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
   background: var(--faint);
   display: inline-block;
 }
-.dot.done { background: var(--accent); }
+.dot.done {
+  background: var(--accent);
+}
 
 .link-u {
   position: relative;
 }
 .link-u::after {
   content: "";
-  position: absolute; left: 0; right: 0; bottom: -2px;
-  height: 1px; background: currentColor;
-  transform: scaleX(0); transform-origin: left;
-  transition: transform .35s cubic-bezier(.2,.7,.2,1);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.link-u:hover::after { transform: scaleX(1); }
+.link-u:hover::after {
+  transform: scaleX(1);
+}
 
 .check {
   appearance: none;
-  width: 14px; height: 14px;
+  width: 14px;
+  height: 14px;
   border: 1px solid var(--faint);
   border-radius: 2px;
   cursor: pointer;
   background: transparent;
-  display: inline-grid; place-content: center;
-  transition: all .2s ease;
+  display: inline-grid;
+  place-content: center;
+  transition: all 0.2s ease;
   flex-shrink: 0;
 }
-.check:hover { border-color: var(--fg); }
+.check:hover {
+  border-color: var(--fg);
+}
 .check:checked {
   background: var(--fg);
   border-color: var(--fg);
 }
 .check:checked::after {
   content: "";
-  width: 6px; height: 3px;
+  width: 6px;
+  height: 3px;
   border-left: 1.5px solid var(--bg);
   border-bottom: 1.5px solid var(--bg);
-  transform: rotate(-45deg) translate(1px,-1px);
+  transform: rotate(-45deg) translate(1px, -1px);
 }
 
 .bar {
@@ -107,7 +134,8 @@ html, body {
   overflow: hidden;
 }
 .bar > i {
-  position: absolute; inset: 0;
+  position: absolute;
+  inset: 0;
   background: var(--fg);
   transform-origin: left;
 }
@@ -115,7 +143,7 @@ html, body {
 .tag {
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -124,7 +152,7 @@ html, body {
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--faint);
-  letter-spacing: .1em;
+  letter-spacing: 0.1em;
 }
 
 .fade-in {
@@ -132,7 +160,8 @@ html, body {
   transform: translateY(8px);
 }
 
-input[type="text"], textarea {
+input[type="text"],
+textarea {
   background: transparent;
   outline: none;
   border: none;
@@ -140,18 +169,27 @@ input[type="text"], textarea {
   font-family: inherit;
 }
 
-button { cursor: pointer; }
+button {
+  cursor: pointer;
+}
 
 .btn-ghost {
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: .1em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
   padding: 6px 10px;
   border: 1px solid var(--line);
   background: transparent;
-  transition: all .2s ease;
+  transition: all 0.2s ease;
 }
-.btn-ghost:hover { color: var(--fg); border-color: var(--fg); }
-.btn-ghost.active { color: var(--bg); background: var(--fg); border-color: var(--fg); }
+.btn-ghost:hover {
+  color: var(--fg);
+  border-color: var(--fg);
+}
+.btn-ghost.active {
+  color: var(--bg);
+  background: var(--fg);
+  border-color: var(--fg);
+}

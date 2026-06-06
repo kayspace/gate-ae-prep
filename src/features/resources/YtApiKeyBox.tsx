@@ -38,8 +38,8 @@ export function YtApiKeyBox({
             >
               console.cloud.google.com
             </a>{" "}
-            → create project → enable <span className="mono">YouTube Data API v3</span> → create
-            api key. saved automatically as you type.
+            → create project → enable <span className="mono">YouTube Data API v3</span> → create api
+            key. saved automatically as you type.
           </p>
         </>
       )}

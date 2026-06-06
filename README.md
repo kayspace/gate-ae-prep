@@ -217,19 +217,18 @@ The feedback endpoint requires:
 - a shared Notion database
 - matching database properties:
 
-| Property | Type |
-|-----------|--------|
-| Nickname | Title |
-| Message | Rich Text |
-| Category | Select |
-| Submitted At | Date |
+| Property     | Type      |
+| ------------ | --------- |
+| Nickname     | Title     |
+| Message      | Rich Text |
+| Category     | Select    |
+| Submitted At | Date      |
 
 ### Deployment notes
 
 The feedback feature requires deployment on Vercel because it depends on a serverless function.
 
 Local frontend development (`npm run dev`) does not execute Vercel Functions.
-
 
 ## Customization
 

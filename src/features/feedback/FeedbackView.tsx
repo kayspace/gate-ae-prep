@@ -5,14 +5,10 @@ import { STORAGE_KEYS } from "@/lib/storage";
 const COOLDOWN_MS = 30_000;
 
 export function FeedbackView() {
- 
   const [nickname, setNickname] = useState("");
-  const [category, setCategory] =
-    useState<(typeof CATEGORIES)[number]>("General");
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("General");
   const [message, setMessage] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle",
-  );
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [errMsg, setErrMsg] = useState("");
   const [cooldownLeft, setCooldownLeft] = useState(0);
 
@@ -20,9 +16,7 @@ export function FeedbackView() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const check = () => {
-      const last = Number(
-        localStorage.getItem(STORAGE_KEYS.feedbackCooldown) || "0",
-      );
+      const last = Number(localStorage.getItem(STORAGE_KEYS.feedbackCooldown) || "0");
       const left = Math.max(0, COOLDOWN_MS - (Date.now() - last));
       setCooldownLeft(left);
     };
@@ -57,24 +51,21 @@ export function FeedbackView() {
         }),
       });
 
-    //  console.log("status", response.status);
+      //  console.log("status", response.status);
 
-     const res = await response.json();
+      const res = await response.json();
 
-    //  console.log("response", res);
+      //  console.log("response", res);
 
-     if (!response.ok) {
-       throw new Error(res.error || `Request failed: ${response.status}`);
-     }
+      if (!response.ok) {
+        throw new Error(res.error || `Request failed: ${response.status}`);
+      }
 
       if (res.ok) {
         setStatus("sent");
         setMessage("");
         try {
-          localStorage.setItem(
-            STORAGE_KEYS.feedbackCooldown,
-            String(Date.now()),
-          );
+          localStorage.setItem(STORAGE_KEYS.feedbackCooldown, String(Date.now()));
         } catch {}
       } else {
         setStatus("error");
@@ -91,21 +82,19 @@ export function FeedbackView() {
       <div className="section-num">feedback · the lifeline</div>
       <h1 className="serif text-5xl mt-2 mb-6 lowercase">your voice</h1>
       <p className="text-sm text-[var(--muted)] max-w-xl mb-3 leading-relaxed">
-        your feedback is what keeps this alive and going. if you love it, hate
-        it, found a bug, have an idea, want to praise or roast — drop it here.
-        all of it is read and taken into account.
+        your feedback is what keeps this alive and going. if you love it, hate it, found a bug, have
+        an idea, want to praise or roast — drop it here. all of it is read and taken into account.
       </p>
       <p className="text-xs text-[var(--faint)] max-w-xl mb-8 leading-relaxed italic">
-        one rule: be polite. behind every project is a person. constructive
-        beats cruel, always.
+        one rule: be polite. behind every project is a person. constructive beats cruel, always.
       </p>
 
       {status === "sent" ? (
         <div className="max-w-xl border border-[var(--line)] p-8">
           <div className="serif text-2xl mb-2 lowercase">thank you</div>
           <p className="text-sm text-[var(--muted)] leading-relaxed mb-6">
-            your feedback landed. it genuinely matters. expect quiet
-            improvements driven by notes like yours.
+            your feedback landed. it genuinely matters. expect quiet improvements driven by notes
+            like yours.
           </p>
           <button
             onClick={() => {
@@ -174,9 +163,7 @@ export function FeedbackView() {
             />
           </div>
 
-          {status === "error" && (
-            <div className="text-xs text-red-500 mono">{errMsg}</div>
-          )}
+          {status === "error" && <div className="text-xs text-red-500 mono">{errMsg}</div>}
 
           <div className="flex items-center gap-4">
             <button

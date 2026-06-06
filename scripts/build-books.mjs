@@ -6,7 +6,11 @@ const ROOT = "public/books";
 const OUT = "src/lib/books.ts";
 
 const sections = readdirSync(ROOT).filter((d) => {
-  try { return statSync(join(ROOT, d)).isDirectory(); } catch { return false; }
+  try {
+    return statSync(join(ROOT, d)).isDirectory();
+  } catch {
+    return false;
+  }
 });
 
 const data = {};

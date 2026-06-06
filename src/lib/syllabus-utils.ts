@@ -7,9 +7,7 @@ export function topicKey(s: Section, t: string, p: string) {
 }
 
 export function sectionStats(s: Section, progress: Progress) {
-  const all = [...s.core, ...s.special].flatMap((t) =>
-    t.points.map((p) => topicKey(s, t.name, p)),
-  );
+  const all = [...s.core, ...s.special].flatMap((t) => t.points.map((p) => topicKey(s, t.name, p)));
   const done = all.filter((k) => progress[k]).length;
   return { done, total: all.length, pct: all.length ? done / all.length : 0 };
 }

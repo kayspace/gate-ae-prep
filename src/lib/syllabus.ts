@@ -35,10 +35,7 @@ export const syllabus: Section[] = [
       },
       {
         name: "Analytical Aptitude",
-        points: [
-          "Logic: deduction and induction",
-          "Analogy, numerical relations & reasoning",
-        ],
+        points: ["Logic: deduction and induction", "Analogy, numerical relations & reasoning"],
       },
       {
         name: "Spatial Aptitude",
@@ -278,10 +275,7 @@ export const syllabus: Section[] = [
       },
       {
         name: "Engine performance",
-        points: [
-          "Ramjet, turbojet, turbofan, turboprop, turboshaft",
-          "Afterburners",
-        ],
+        points: ["Ramjet, turbojet, turbofan, turboprop, turboshaft", "Afterburners"],
       },
       {
         name: "Turbomachinery",
