@@ -18,6 +18,10 @@ The app is intentionally simple:
 - desktop-only experience (mobile viewports see a friendly block screen)
 - integrated feedback system backed by Notion
 
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for detailed information on how to get started. It was written in a way that anyone can easily grasp the flow to contribute, do go through it thouroughly if u wanna contribute.
+
 ## Repo contents
 
 - `README.md` — this developer guide.
@@ -263,6 +267,14 @@ Edit `src/styles.css` (design tokens live at the top).
 3. Update `USER_GUIDE.md` if user-facing behavior changes.
 4. Commit and push.
 
+## Show Your Support
+
+If you found this project helpful, please give it a star! It helps others discover the project.
+
+## Contact
+
+For inquiries or collaborations about using the content or the code, reach out to me at kayzspace@outlook.com
+
 ## License
 
-MIT. See [LICENSE](./LICENSE).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

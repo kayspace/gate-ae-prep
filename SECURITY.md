@@ -40,7 +40,7 @@ If you discover a vulnerability, report it privately so it can be investigated a
 
 Open a [GitHub Security Advisory](https://github.com/kayspace/gate-ae-prep/security/advisories/new) using the private reporting feature. This is the preferred channel.
 
-Alternatively, if you are unable to use that channel, contact the maintainer directly through GitHub by sending a message to [@kayspace](kayzspace@outlook.com).
+Alternatively, if you are unable to use that channel, contact the maintainer directly through GitHub by sending a message to kayzspace@outlook.com
 
 **What to include in your report:**
 
@@ -172,6 +172,6 @@ If you are unsure whether something qualifies as a security issue, report it pri
 
 ## Contact
 
-For private security disclosures, use the [GitHub Security Advisory](https://github.com/kayspace/gate-ae-prep/security/advisories/new) feature or contact [@kayspace](kayzspace@outlook.com) directly.
+For private security disclosures, use the [GitHub Security Advisory](https://github.com/kayspace/gate-ae-prep/security/advisories/new) feature or contact kayzspace@outlook.com directly.
 
 For non-security questions about the project, open a public issue with the `question` label.
