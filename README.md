@@ -16,11 +16,13 @@ The app is intentionally simple:
 - light/dark theme toggle that persists across refresh
 - floating back-to-top button for long pages
 - desktop-only experience (mobile viewports see a friendly block screen)
+- integrated feedback system backed by Notion
 
 ## Repo contents
 
 - `README.md` — this developer guide.
 - `USER_GUIDE.md` — the user-facing guide intended for first-time visitors.
+- `api/feedback.ts` — Vercel serverless function that submits feedback to Notion.
 - `src/routes/index.tsx` — thin route shell. Wires app state, persistence, and the active view.
 - `src/types/` — shared TypeScript types.
 - `src/lib/` — pure utilities (storage, youtube, syllabus helpers, formatting, syllabus + books data).
@@ -85,6 +87,8 @@ lives in `src/lib/`.
 ### Directory layout
 
 ```
+api/
+└── feedback.ts                # feedback submission endpoint (Notion)
 src/
 ├── routes/
 │   ├── __root.tsx              # root layout
@@ -191,6 +195,41 @@ No server-side storage or authentication is used.
 4. Each video can be marked done independently or auto-marked at 90% watched.
 
 The embedded player logic lives in `EmbeddedPlayer` and relies on saved watch state to resume playback cleanly.
+
+## Feedback system
+
+The app includes a built-in feedback page that allows users to submit suggestions, bug reports, questions, and general feedback directly from the application.
+
+### Flow
+
+1. User opens the Feedback tab.
+2. User enters a nickname, category, and message.
+3. Frontend sends a POST request to `/api/feedback`.
+4. Vercel executes the serverless function in `api/feedback.ts`.
+5. The function creates a new entry in the configured Notion database.
+6. The feedback becomes immediately available for review inside Notion.
+
+### Notion integration
+
+The feedback endpoint requires:
+
+- `NOTION_TOKEN` environment variable
+- a shared Notion database
+- matching database properties:
+
+| Property | Type |
+|-----------|--------|
+| Nickname | Title |
+| Message | Rich Text |
+| Category | Select |
+| Submitted At | Date |
+
+### Deployment notes
+
+The feedback feature requires deployment on Vercel because it depends on a serverless function.
+
+Local frontend development (`npm run dev`) does not execute Vercel Functions.
+
 
 ## Customization
 

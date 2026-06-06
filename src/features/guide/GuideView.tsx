@@ -293,6 +293,37 @@ export function GuideView() {
         </section>
 
         <section>
+          <h2 className="serif text-xl mb-2 lowercase">feedback</h2>
+
+          <p>
+            Found a bug? Have an idea? Want to request a feature or share feedback about your
+            preparation experience? Use the feedback section to send it directly to the project.
+          </p>
+
+          <ul className="list-disc pl-5 mt-2 space-y-1">
+            <li>choose a category that best matches your feedback</li>
+            <li>enter a nickname so the message has some context</li>
+            <li>describe the issue, suggestion, or idea in as much detail as needed</li>
+            <li>
+              click <strong>send feedback</strong> to submit it
+            </li>
+          </ul>
+
+          <p className="mt-3">
+            Feedback is delivered directly to the project's feedback tracker and is reviewed
+            periodically.
+          </p>
+
+          <p className="mt-3">
+            Categories include <strong>praise</strong>, <strong>bug report</strong>,{" "}
+            <strong>feature request</strong>, <strong>question</strong>, <strong>general</strong>,
+            and <strong>other</strong>.
+          </p>
+
+          <p className="mt-3">To reduce spam, submissions have a short cooldown between sends.</p>
+        </section>
+
+        <section>
           <h2 className="serif text-xl mb-2 lowercase">privacy</h2>
           <p>
             Your data stays in your browser. There is no login required, and nothing is stored on a

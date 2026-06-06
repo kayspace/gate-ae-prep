@@ -166,6 +166,42 @@ This section shows your overall progress.
 - Use it to see which sections need more attention.
 - It helps you keep your prep balanced.
 
+## Feedback section
+
+This section lets you send feedback directly to the project.
+
+Use it to:
+
+- report bugs,
+- suggest new features,
+- ask questions,
+- share ideas,
+- give general feedback.
+
+### How it works
+
+1. Enter a nickname.
+2. Choose a category.
+3. Write your message.
+4. Click **send feedback**.
+
+Your feedback is sent directly to the project's feedback tracker and reviewed manually.
+
+### Categories
+
+- Praise
+- Bug report
+- Feature request
+- Question
+- General
+- Other
+
+### Notes
+
+- Messages are limited to 2000 characters.
+- A short cooldown prevents spam submissions.
+- Please keep feedback constructive and respectful.
+
 ## Privacy and storage
 
 - The tool does not require any login.
