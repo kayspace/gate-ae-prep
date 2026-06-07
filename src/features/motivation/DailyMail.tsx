@@ -39,8 +39,7 @@ export function DailyMail() {
         mail
         {unread && (
           <span
-            className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-[var(--accent)]"
-            style={{ animation: "pulse 2s ease-in-out infinite" }}
+            className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse"
           />
         )}
       </button>
