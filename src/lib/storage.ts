@@ -12,6 +12,9 @@ export const STORAGE_KEYS = {
   theme: "gate-ae-theme-v1",
   tourDone: "gate-ae-tour-done-v1",
   feedbackCooldown: "gate-ae-feedback-cooldown-v1",
+  milestones: "gate-ae-milestones-v1",
+  lastTouched: "gate-ae-last-touched-v1",
+  dailyMailOpened: "gate-ae-daily-mail-v1",
 } as const;
 
 export function loadJSON<T>(key: string, fallback: T): T {

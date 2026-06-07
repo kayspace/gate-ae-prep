@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { STORAGE_KEYS } from "@/lib/storage";
+import { DailyMail } from "@/features/motivation/DailyMail";
 
 export function AppHeader({
   done,
@@ -61,6 +62,7 @@ export function AppHeader({
           <div className="mono text-xs text-[var(--muted)]">
             {done}/{total} topics
           </div>
+          <DailyMail />
           <button
             data-tour="tour-btn"
             onClick={onStartTour}
